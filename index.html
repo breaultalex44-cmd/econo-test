@@ -1,0 +1,2620 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EconoMaster: Canada & Global Economic Engine v5.5</title>
+    
+    <!-- PWA Meta Tags & Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="EconoMaster">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'radar-spin': 'spin 4s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .tab-btn.active {
+            border-bottom: 2px solid #38bdf8;
+            color: #38bdf8;
+            background-color: rgba(56, 189, 248, 0.05);
+        }
+        input[type="range"] { accent-color: #38bdf8; min-height: 24px; }
+        
+        /* Radar Scanning Animation */
+        .radar-sweep {
+            background: conic-gradient(from 0deg, rgba(239, 68, 68, 0.4) 0deg, rgba(239, 68, 68, 0) 60deg, rgba(0, 0, 0, 0) 360deg);
+            border-radius: 50%;
+        }
+        
+        @keyframes hazard-stripes {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
+        }
+        .hazard-bg {
+            background: repeating-linear-gradient(
+                -45deg,
+                #1e1b4b,
+                #1e1b4b 10px,
+                #31102f 10px,
+                #31102f 20px
+            );
+        }
+
+        /* Screen Shake Keyframes for Nuclear Blast Impact */
+        @keyframes nuke-shake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-8px, 6px) rotate(-1deg); }
+            20% { transform: translate(9px, -7px) rotate(1.5deg); }
+            30% { transform: translate(-6px, -4px) rotate(-1deg); }
+            40% { transform: translate(7px, 5px) rotate(1deg); }
+            50% { transform: translate(-5px, 3px) rotate(-0.5deg); }
+            60% { transform: translate(4px, -3px) rotate(0.5deg); }
+            70% { transform: translate(-2px, 2px) rotate(0deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .animate-nuke-shake {
+            animation: nuke-shake 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 overflow-x-hidden">
+
+    <!-- Loading Screen Overlay -->
+    <div id="loading-screen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="relative flex items-center justify-center mb-6">
+            <div class="absolute w-20 h-20 rounded-2xl bg-gradient-to-tr from-red-600 to-sky-500 animate-ping opacity-25"></div>
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-sky-500 flex items-center justify-center font-bold text-3xl text-white shadow-xl shadow-sky-500/30 z-10">
+                <span>🍁</span>
+            </div>
+        </div>
+        <h2 class="text-lg font-bold text-slate-100 tracking-tight">EconoMaster Engine v5.5</h2>
+        <p class="text-xs text-slate-400 mt-1">Initializing Sovereign Defense, Trade & Extended Policy Matrix...</p>
+        <div class="w-48 h-1.5 bg-slate-800 rounded-full mt-6 overflow-hidden">
+            <div id="loading-bar" class="h-full bg-gradient-to-r from-sky-500 to-emerald-400 w-0 transition-all duration-300"></div>
+        </div>
+    </div>
+
+    <!-- FULL-SCREEN GRAPHIC NUCLEAR DEPLOYMENT OVERLAY CANVAS -->
+    <div id="nuke-deployment-overlay" class="fixed inset-0 z-[100] bg-black hidden select-none overflow-hidden">
+        <!-- Canvas for dynamic missile trajectory, mushroom cloud, shrapnel, and glass cracks -->
+        <canvas id="nuke-canvas" class="w-full h-full block absolute inset-0"></canvas>
+
+        <!-- Top Emergency Cancel / Abort Control Bar -->
+        <div class="absolute top-4 inset-x-0 z-20 flex justify-center items-center pointer-events-auto px-4">
+            <button onclick="abortNuclearDeployment()" class="px-6 py-2.5 bg-rose-600/90 hover:bg-rose-500 text-white font-extrabold rounded-full text-xs sm:text-sm tracking-wider uppercase border-2 border-rose-400 shadow-2xl shadow-rose-900/80 transition active:scale-95 flex items-center gap-2 cursor-pointer backdrop-blur-md">
+                <i class="fa-solid fa-ban text-sm"></i>
+                <span>(Cancel) Abort Sequence</span>
+            </button>
+        </div>
+
+        <!-- HUD Strategic Overlay Info -->
+        <div id="nuke-hud-overlay" class="absolute inset-0 pointer-events-none flex flex-col justify-between p-6 z-10 text-rose-500 font-mono text-xs">
+            <div class="flex justify-between items-start">
+                <div class="bg-black/60 p-3 rounded border border-rose-900/60 backdrop-blur-sm space-y-1">
+                    <div class="flex items-center gap-2 text-rose-400 font-bold">
+                        <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                        <span id="nuke-hud-title">STRATEGIC WARHEAD DEPLOYMENT</span>
+                    </div>
+                    <div>VECTOR STATUS: <span id="nuke-hud-status" class="text-amber-400 font-bold">MID-FLIGHT TRANSIT</span></div>
+                    <div>ALTITUDE: <span id="nuke-hud-alt">42,000 M</span></div>
+                </div>
+                <div class="bg-black/60 p-3 rounded border border-rose-900/60 backdrop-blur-sm text-right space-y-1">
+                    <div>DEFCON LEVEL: <span class="text-red-500 font-black animate-pulse">1 (NUCLEAR ENGAGEMENT)</span></div>
+                    <div>TARGET LOCK: <span class="text-slate-200">SOVEREIGN COORDINATES</span></div>
+                </div>
+            </div>
+
+            <div id="nuke-warning-banner" class="self-center bg-rose-950/80 border border-rose-600 px-6 py-2 rounded-lg text-rose-200 text-sm sm:text-base font-extrabold tracking-widest uppercase animate-pulse shadow-2xl backdrop-blur-md text-center">
+                ⚠️ WARNING: STRATEGIC ICBM RE-ENTRY DETECTED ⚠️
+            </div>
+
+            <div class="flex justify-between items-end text-[10px] text-rose-400/80">
+                <div>SYSTEM ID: CAN-NORAD-DEFENSE-4</div>
+                <div>SEQUENCE TIMER: <span id="nuke-hud-timer" class="text-white font-bold">10.0s</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER SCREEN MODAL -->
+    <div id="game-over-modal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-rose-600 rounded-2xl max-w-lg w-full p-6 space-y-6 text-center shadow-2xl">
+            <div class="w-16 h-16 rounded-full bg-rose-950 border border-rose-500 mx-auto flex items-center justify-center text-rose-500 text-3xl animate-bounce">
+                <i class="fa-solid fa-skull-crossbones"></i>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-xl font-black text-rose-500 tracking-wider">GOVERNMENT DISSOLVED // GAME OVER</h3>
+                <p id="game-over-reason" class="text-xs text-slate-300 leading-relaxed">
+                    Voter approval remained at 0% for 4 consecutive quarters. Mass general strikes, legislative deadlock, and a constitutional crisis have forced the dissolution of parliament.
+                </p>
+            </div>
+            <button onclick="resetGameToDefault()" class="w-full py-3 bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold rounded-xl text-xs transition shadow-lg cursor-pointer">
+                Restart Back to Default Game
+            </button>
+        </div>
+    </div>
+
+    <!-- PORTABLE THUMB TAB SYSTEM MODAL (JSON SAVE / LOAD) -->
+    <div id="thumb-tab-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-memory text-sky-400"></i> Portable Thumb Tab System (JSON Save)
+                </h3>
+                <button onclick="closeThumbTabModal()" class="text-slate-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Your game state is automatically remembered across sessions. Use the Portable Thumb Tab system below to export/import JSON save files or forcefully restart.
+            </p>
+            <div class="space-y-2.5">
+                <button onclick="exportGameSave()" class="w-full py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded text-xs transition cursor-pointer flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Export Save File (.json)
+                </button>
+                <label class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded text-xs transition cursor-pointer flex items-center justify-center gap-2 block text-center">
+                    <i class="fa-solid fa-upload"></i> Import Save File (.json)
+                    <input type="file" id="import-save-file" accept=".json" class="hidden" onchange="importGameSave(event)">
+                </label>
+                <button onclick="forceResetGame()" class="w-full py-2 bg-rose-950 hover:bg-rose-900 text-rose-400 border border-rose-800 font-bold rounded text-xs transition cursor-pointer flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i> Forcefully Reset Game / Wipe Memory
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-red-600 to-sky-500 flex items-center justify-center font-bold text-sm sm:text-xl text-white shadow-lg shadow-sky-500/20 shrink-0">
+                        <span>🍁</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <h1 class="font-bold text-sm sm:text-lg text-slate-100 tracking-tight">EconoMaster</h1>
+                            <span class="text-[9px] sm:text-xs font-semibold px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800/50">v5.5</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 hidden md:block">Canada Sovereign Fiscal, Dynamic FTAs & Defence Engine</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <div class="flex flex-col text-right">
+                        <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wider">Period</span>
+                        <span id="current-quarter-display" class="font-bold text-sky-400 text-xs sm:text-sm">Year 1 - Q1</span>
+                    </div>
+
+                    <div class="bg-slate-800/80 p-1 rounded-lg border border-slate-700 flex items-center">
+                        <button id="advance-btn" onclick="advanceQuarter()" class="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-semibold rounded shadow-md text-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer">
+                            <i class="fa-solid fa-forward text-[10px]"></i>
+                            <span class="hidden xs:inline">Advance</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-slate-900/90 border-t border-slate-800/80 px-2 sm:px-8 overflow-x-auto scrollbar-none">
+            <nav class="flex space-x-1 sm:space-x-6 min-w-max" id="nav-tabs">
+                <button onclick="switchTab('dashboard')" class="tab-btn active px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-chart-line text-sky-400"></i> Dashboard
+                </button>
+                <button onclick="switchTab('policy')" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-building-columns text-emerald-400"></i> Finance & Policy <span class="text-[9px] bg-sky-950 text-sky-300 px-1 py-0.2 rounded border border-sky-800">+10 Metrics</span>
+                </button>
+                <button onclick="switchTab('funding')" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-hand-holding-dollar text-purple-400"></i> Public Services
+                </button>
+                <button onclick="switchTab('industries')" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-industry text-amber-400"></i> Industries & FTAs
+                </button>
+                <button onclick="switchTab('diplomacy')" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-globe text-teal-400"></i> UN & Associations
+                </button>
+                <button onclick="switchTab('defense')" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-shield-halved text-rose-400"></i> Defence Dept <span class="text-[9px] bg-rose-950 text-rose-300 px-1 py-0.2 rounded border border-rose-800">Missiles & NPT</span>
+                </button>
+                <button onclick="switchTab('news')" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-newspaper text-indigo-400"></i> Press Ledger
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+
+        <!-- TAB 1: EXECUTIVE DASHBOARD -->
+        <section id="tab-dashboard" class="tab-content space-y-4 sm:space-y-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>Real GDP ($ CAD)</span>
+                        <i class="fa-solid fa-coins text-sky-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpi-gdp" class="text-lg sm:text-2xl font-bold text-slate-100">$2.940 T</span>
+                        <span id="kpi-gdp-growth" class="text-[11px] font-semibold text-emerald-400">+2.1%</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>CPI Inflation</span>
+                        <i class="fa-solid fa-fire text-amber-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpi-inflation" class="text-lg sm:text-2xl font-bold text-slate-100">2.4%</span>
+                        <span id="kpi-inflation-status" class="text-[11px] font-semibold text-emerald-400">Target Band</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>Unemployment</span>
+                        <i class="fa-solid fa-users text-purple-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpi-unemployment" class="text-lg sm:text-2xl font-bold text-slate-100">5.8%</span>
+                        <span class="text-[11px] font-semibold text-slate-400">Stable</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>BoC Rate & Spread</span>
+                        <i class="fa-solid fa-landmark text-emerald-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpi-rate" class="text-lg sm:text-2xl font-bold text-slate-100">3.75%</span>
+                        <span id="kpi-bond-spread" class="text-[10px] font-semibold text-sky-400">0 bps</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>Debt / Surplus</span>
+                        <i class="fa-solid fa-vault text-rose-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpi-debt" class="text-base sm:text-xl font-bold text-slate-100">64.2%</span>
+                        <span id="kpi-budget-balance" class="text-[11px] font-semibold text-rose-400">-$32.5B</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>Exchange (CAD/USD)</span>
+                        <i class="fa-solid fa-dollar-sign text-emerald-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpi-fx" class="text-lg sm:text-2xl font-bold text-slate-100">$0.745</span>
+                        <span class="text-[11px] font-semibold text-emerald-400">Floating</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>Trade Balance</span>
+                        <i class="fa-solid fa-ship text-sky-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpi-trade" class="text-lg sm:text-2xl font-bold text-slate-100">+$4.2B</span>
+                        <span class="text-[11px] font-semibold text-emerald-400">Surplus</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-slate-400 flex items-center justify-between">
+                        <span>Voter Approval</span>
+                        <i class="fa-solid fa-square-poll-vertical text-amber-400"></i>
+                    </div>
+                    <div class="mt-2 flex items-baseline justify-between">
+                        <span id="kpi-approval" class="text-lg sm:text-2xl font-bold text-slate-100">54%</span>
+                        <span class="text-[11px] font-semibold text-emerald-400">Stable</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5">
+                    <h3 class="font-semibold text-slate-200 text-xs sm:text-sm mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-area text-sky-400"></i> Output Growth & CPI Inflation
+                    </h3>
+                    <div class="relative h-56 sm:h-64 w-full">
+                        <canvas id="macroChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5">
+                    <h3 class="font-semibold text-slate-200 text-xs sm:text-sm mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-emerald-400"></i> Bond Yields & Debt-to-GDP
+                    </h3>
+                    <div class="relative h-56 sm:h-64 w-full">
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cabinet Advisory Board -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5">
+                <h3 class="font-semibold text-slate-200 text-xs sm:text-sm mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-brain text-purple-400"></i> Canadian Sovereign Cabinet Advisory Board
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                        <span class="font-bold text-sky-400 block mb-1">Fiscal & Structural Levers</span>
+                        <p id="advisor-fiscal" class="text-slate-300 leading-relaxed text-[11px]">10 newly configured fiscal sliders dynamically impact FDI inflows, infrastructure productivity, labor bargaining balance, and R&D capital output.</p>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                        <span class="font-bold text-emerald-400 block mb-1">Bilateral FTAs & Diplomatic Friction</span>
+                        <p class="text-slate-300 leading-relaxed text-[11px]">Ratifying new FTAs requires formal "Request to Sign" submission with randomized diplomatic outcomes biased by Canadian historic alliance scores.</p>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                        <span class="font-bold text-amber-400 block mb-1">DND Strategic Sovereign Shield</span>
+                        <p class="text-slate-300 leading-relaxed text-[11px]">Manage domestic hypersonic and interceptor missile production while ensuring compliance under the Non-Proliferation Treaty (NPT).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: FINANCE & POLICY HUB -->
+        <section id="tab-policy" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <!-- Primary Tax Controls -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                    <div class="border-b border-slate-800 pb-3">
+                        <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-file-invoice-dollar text-emerald-400"></i> Baseline Fiscal & Tax Levers
+                        </h3>
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium">
+                            <label for="slider-pit" class="text-slate-300">Avg Personal Income Tax Rate</label>
+                            <span id="val-pit" class="text-sky-400 font-bold">22%</span>
+                        </div>
+                        <input type="range" id="slider-pit" min="10" max="45" value="22" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updatePolicies()">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium">
+                            <label for="slider-cit" class="text-slate-300">Corporate Income Tax Rate</label>
+                            <span id="val-cit" class="text-sky-400 font-bold">13%</span>
+                        </div>
+                        <input type="range" id="slider-cit" min="5" max="35" value="13" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updatePolicies()">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium">
+                            <label for="slider-gst" class="text-slate-300">Federal Sales Tax Rate (GST/HST)</label>
+                            <span id="val-gst" class="text-sky-400 font-bold">5%</span>
+                        </div>
+                        <input type="range" id="slider-gst" min="0" max="15" value="5" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updatePolicies()">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium">
+                            <label for="slider-carbon" class="text-slate-300">Carbon Price ($ / Tonne CAD)</label>
+                            <span id="val-carbon" class="text-sky-400 font-bold">$30</span>
+                        </div>
+                        <input type="range" id="slider-carbon" min="0" max="170" value="30" step="5" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updatePolicies()">
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800 space-y-3">
+                        <h4 class="text-xs font-bold text-sky-400 uppercase tracking-wider">Monetary & Capital Controls</h4>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label for="slider-boc-rate" class="text-slate-300">BoC Overnight Rate (%)</label>
+                                <span id="val-boc-rate" class="text-purple-400 font-bold">3.50%</span>
+                            </div>
+                            <input type="range" id="slider-boc-rate" min="0.25" max="12.0" step="0.25" value="3.50" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label for="slider-reserve" class="text-slate-300">Bank Reserve Ratio (%)</label>
+                                <span id="val-reserve" class="text-purple-400 font-bold">3.0%</span>
+                            </div>
+                            <input type="range" id="slider-reserve" min="1.0" max="10.0" step="0.5" value="3.0" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label for="slider-capgains" class="text-slate-300">Capital Gains Inclusion (%)</label>
+                                <span id="val-capgains" class="text-sky-400 font-bold">40%</span>
+                            </div>
+                            <input type="range" id="slider-capgains" min="25" max="100" step="5" value="40" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updatePolicies()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 10 NEW CONFIGURABLE METRICS SECTION -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                    <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-sky-400"></i> 10 New Configurable Sovereign Metrics
+                        </h3>
+                        <span class="text-[10px] text-emerald-400 font-semibold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">Dynamic Links Active</span>
+                    </div>
+
+                    <div class="space-y-3 text-xs max-h-[520px] overflow-y-auto pr-1">
+                        <!-- Metric 1 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">1. Property Tax Assessment Base (%)</label>
+                                <span id="val-prop-tax" class="text-sky-400 font-bold">1.2%</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied directly to Municipal Revenue & Real Estate Output.</p>
+                            <input type="range" id="slider-prop-tax" min="0.2" max="4.0" step="0.1" value="1.2" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 2 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">2. Federal Infrastructure Multiplier (x)</label>
+                                <span id="val-infra-mult" class="text-emerald-400 font-bold">1.4x</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied to GDP Growth Acceleration & Transport/Construction Output.</p>
+                            <input type="range" id="slider-infra-mult" min="0.8" max="2.5" step="0.1" value="1.4" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 3 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">3. Clean Energy Investment Tax Credit (%)</label>
+                                <span id="val-clean-itc" class="text-teal-400 font-bold">15%</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied to Clean Energy Industry output & Capital Outlays.</p>
+                            <input type="range" id="slider-clean-itc" min="0" max="40" step="1" value="15" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 4 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">4. Resource Royalty & Extraction Surcharge (%)</label>
+                                <span id="val-royalty-rate" class="text-amber-400 font-bold">8.5%</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied to Oil, Gas, Mining revenue & resource price elasticity.</p>
+                            <input type="range" id="slider-royalty-rate" min="1.0" max="25.0" step="0.5" value="8.5" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 5 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">5. Wealth Tax on Ultra-High Net Worth (%)</label>
+                                <span id="val-wealth-tax" class="text-rose-400 font-bold">0.5%</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied to Capital Flight risks, Federal Revenue & Voter Approval.</p>
+                            <input type="range" id="slider-wealth-tax" min="0.0" max="5.0" step="0.25" value="0.5" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 6 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">6. Bank Transactions Financial Levy (%)</label>
+                                <span id="val-bank-levy" class="text-purple-400 font-bold">0.15%</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied to Banking Output, Liquidity Velocity & Financial Revenues.</p>
+                            <input type="range" id="slider-bank-levy" min="0.0" max="1.0" step="0.05" value="0.15" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 7 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">7. Import Tariff Surcharge Base Rate (%)</label>
+                                <span id="val-tariff-base" class="text-indigo-400 font-bold">2.0%</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied directly to Trade Balances, Import Prices & CPI Inflation.</p>
+                            <input type="range" id="slider-tariff-base" min="0.0" max="15.0" step="0.5" value="2.0" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 8 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">8. Labor Union Bargaining Power Index</label>
+                                <span id="val-union-power" class="text-sky-400 font-bold">50</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied to Wage-Push CPI Inflation, Real Purchasing Power & Hiring Costs.</p>
+                            <input type="range" id="slider-union-power" min="10" max="100" step="5" value="50" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 9 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">9. Federal R&D Innovation Rebate (%)</label>
+                                <span id="val-rd-rebate" class="text-purple-400 font-bold">12%</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied to Tech/AI Output, Total Factor Productivity & High-Skill Wages.</p>
+                            <input type="range" id="slider-rd-rebate" min="0" max="35" step="1" value="12" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+
+                        <!-- Metric 10 -->
+                        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div class="flex justify-between">
+                                <label class="text-slate-200 font-semibold">10. FDI Capital Incentive Rate (%)</label>
+                                <span id="val-fdi-incentive" class="text-emerald-400 font-bold">6.0%</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400">Tied to Foreign Direct Investment inflow, Exchange Rate (CAD/USD) & Capital stock.</p>
+                            <input type="range" id="slider-fdi-incentive" min="0.0" max="20.0" step="0.5" value="6.0" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updatePolicies()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: PUBLIC SERVICES & FUNDING -->
+        <section id="tab-funding" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                <div class="border-b border-slate-800 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-hand-holding-dollar text-purple-400"></i> Public Services & Federal Appropriations
+                        </h3>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Optimized for fiscal restraint, value for taxpayers, and core infrastructure.</p>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <span class="text-xs text-slate-400">Total Outlays:</span>
+                        <span id="total-funding-display" class="text-xs sm:text-sm font-bold text-purple-400 ml-1">$310.0B / qtr</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4" id="funding-sliders-container">
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: 15 INDUSTRIES & DYNAMIC FTAS WITH DIPLOMATIC NEGOTIATION -->
+        <section id="tab-industries" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-industry text-amber-400"></i> 15 Canadian Key Industries & Tariff Controls
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" id="industry-cards-container">
+                </div>
+            </div>
+
+            <!-- Free Trade Agreements & AI Negotiating Power -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                    <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-handshake text-sky-400"></i> Dynamic Bilateral Free Trade Agreements (FTAs)
+                        </h3>
+                        <span class="text-[10px] bg-sky-950 text-sky-400 px-2 py-0.5 rounded border border-sky-800">11 Global Possibilities</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Ratification is not instant. Click <strong>"Request to Sign"</strong> to initiate background negotiations with heavy variance based on Canada's historic alliances. Opting out triggers severe economic downturns.</p>
+                    <div class="space-y-3 max-h-[420px] overflow-y-auto pr-1" id="fta-container">
+                        <!-- FTA items populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                    <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-robot text-purple-400"></i> Dynamic AI-Powered Live Negotiating Engine
+                        </h3>
+                        <span id="ai-negotiation-status" class="text-[10px] font-semibold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">Ready</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Deploy adaptive neural negotiators featuring unpredictable diplomatic counter-measures to lock in trade concessions.</p>
+                    
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-300">Select Negotiation Target:</span>
+                            <select id="ai-nego-partner" class="bg-slate-900 text-slate-200 border border-slate-700 rounded px-2 py-1 text-xs">
+                                <option value="us">United States (USMCA / Bilateral)</option>
+                                <option value="uk">United Kingdom (UK-Canada FTA)</option>
+                                <option value="eu">European Union (CETA Optimization)</option>
+                                <option value="japan">Japan (CPTPP Partner)</option>
+                                <option value="india">India (Comprehensive Economic Partnership)</option>
+                                <option value="germany">Germany (Industrial Technology Pact)</option>
+                                <option value="australia">Australia (AUKUS & Mineral Alliance)</option>
+                                <option value="africa">AfCFTA Trade Commission</option>
+                                <option value="mercosur">MERCOSUR Trade Council</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-300">Strategy Stance:</span>
+                            <select id="ai-nego-strategy" class="bg-slate-900 text-slate-200 border border-slate-700 rounded px-2 py-1 text-xs">
+                                <option value="aggressive">Aggressive Tariff Elimination</option>
+                                <option value="balanced">Balanced Bilateral Compromise</option>
+                                <option value="resource_swap">Critical Minerals for Tech Access</option>
+                                <option value="unpredictable">Dynamic High-Stakes Gamble</option>
+                            </select>
+                        </div>
+                        <button onclick="runAiNegotiation()" class="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded text-xs transition shadow cursor-pointer flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-microchip"></i> Execute AI Live Negotiation
+                        </button>
+                    </div>
+
+                    <div id="ai-nego-result" class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 min-h-[90px] flex items-center justify-center text-center text-slate-400">
+                        AI neural negotiation matrices standing by for sovereign instructions...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: UN & INTERNATIONAL ASSOCIATIONS -->
+        <section id="tab-diplomacy" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-globe text-teal-400"></i> United Nations & Expanded Associations
+                    </h3>
+                    <span class="text-xs text-slate-400">10 Multilateral Bodies</span>
+                </div>
+                <p class="text-xs text-slate-300">Manage Canada's financial contributions and voting alignment across expanded global bodies, multilateral forums, arctic sovereignty pacts, and security coalitions. Opting out or joining has direct consequences on approval and macro metrics.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="associations-container">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: DEFENCE DEPARTMENT -->
+        <section id="tab-defense" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                <div class="border-b border-slate-800 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-rose-400"></i> Department of National Defence (DND) Command Matrix
+                        </h3>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Sovereign defense, missile production, NORAD shield & Treaty Compliance.</p>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <span class="text-xs text-slate-400">Total Defence Outlay:</span>
+                        <span id="total-defense-display" class="text-xs sm:text-sm font-bold text-rose-400 ml-1">$16.8B / qtr</span>
+                    </div>
+                </div>
+
+                <!-- DND Summary Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                        <span class="text-[10px] uppercase text-slate-400 font-bold">Active Force Readiness</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="dnd-readiness-val" class="text-base sm:text-lg font-bold text-emerald-400">88.4%</span>
+                            <span class="text-[10px] text-slate-400">NATO Standard</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                        <span class="text-[10px] uppercase text-slate-400 font-bold">Personnel Level</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="dnd-personnel-val" class="text-base sm:text-lg font-bold text-sky-400">71,500</span>
+                            <span class="text-[10px] text-slate-400">Troops</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                        <span class="text-[10px] uppercase text-slate-400 font-bold">Active Missile Stockpile</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="dnd-missile-stockpile" class="text-base sm:text-lg font-bold text-amber-400">2,450 Units</span>
+                            <span class="text-[10px] text-slate-400">Domestic</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                        <span class="text-[10px] uppercase text-slate-400 font-bold">NPT Compliance Status</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="npt-status-display" class="text-xs font-bold text-emerald-400">Signatory (Compliant)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategic Missile Production & NPT Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+                    <!-- Direct Missile Production Controls -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-rocket"></i> Domestic Direct Missile Production
+                            </h4>
+                            <span class="text-[10px] font-semibold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800">Aerospace Linked</span>
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label class="text-slate-300">Guided Interceptor & SAM Production</label>
+                                <span id="val-dnd-interceptor" class="text-amber-400 font-bold">250 / qtr</span>
+                            </div>
+                            <input type="range" id="slider-dnd-interceptor" min="50" max="800" step="25" value="250" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updateDefensePolicy()">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label class="text-slate-300">Hypersonic / Cruise Missile Munitions</label>
+                                <span id="val-dnd-hypersonic" class="text-amber-400 font-bold">80 / qtr</span>
+                            </div>
+                            <input type="range" id="slider-dnd-hypersonic" min="0" max="400" step="10" value="80" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updateDefensePolicy()">
+                        </div>
+
+                        <p class="text-[10px] text-slate-400 italic">
+                            Direct missile production boosts Canadian Aerospace & Defense industrial output while increasing quarterly maintenance outlays by $0.8B.
+                        </p>
+                    </div>
+
+                    <!-- Non-Proliferation Treaty (NPT) Management -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                            <h4 class="text-xs font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-contract"></i> Non-Proliferation Treaty (NPT) Stance
+                            </h4>
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">
+                            Canada is currently a fully compliant signatory of the Treaty on the Non-Proliferation of Nuclear Weapons (NPT), ensuring high international standing and trade benefits.
+                        </p>
+                        <div class="flex items-center justify-between pt-2">
+                            <button onclick="toggleNptStatus()" id="npt-toggle-btn" class="px-3 py-1.5 rounded text-xs font-bold transition cursor-pointer bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900">
+                                <i class="fa-solid fa-check-double mr-1"></i> Ratified & Compliant
+                            </button>
+                            <span class="text-[10px] text-slate-400">Toggling impacts UN/IAEA diplomatic approval</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DND Interactive Sliders & Controls -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
+                        <h4 class="text-xs font-bold text-sky-400 uppercase tracking-wider">Personnel & Cyber Readiness</h4>
+                        
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label class="text-slate-300">Active Duty Personnel Quota</label>
+                                <span id="val-dnd-troops" class="text-sky-400 font-bold">71.5K</span>
+                            </div>
+                            <input type="range" id="slider-dnd-troops" min="50" max="120" step="2.5" value="71.5" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updateDefensePolicy()">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label class="text-slate-300">Reserve & Militia Funding Support</label>
+                                <span id="val-dnd-reserves" class="text-sky-400 font-bold">$3.2B/qtr</span>
+                            </div>
+                            <input type="range" id="slider-dnd-reserves" min="1.0" max="8.0" step="0.5" value="3.2" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updateDefensePolicy()">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label class="text-slate-300">Military Cyber Warfare & Intelligence</label>
+                                <span id="val-dnd-cyber" class="text-sky-400 font-bold">$2.5B/qtr</span>
+                            </div>
+                            <input type="range" id="slider-dnd-cyber" min="0.5" max="6.0" step="0.5" value="2.5" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updateDefensePolicy()">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
+                        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Procurement & NORAD Shield</h4>
+                        
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label class="text-slate-300">Aerospace (F-35 Lightning II & Drones)</label>
+                                <span id="val-dnd-air" class="text-amber-400 font-bold">$4.8B/qtr</span>
+                            </div>
+                            <input type="range" id="slider-dnd-air" min="1.0" max="15.0" step="0.5" value="4.8" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updateDefensePolicy()">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label class="text-slate-300">Naval Surface Combatants & Arctic Patrols</label>
+                                <span id="val-dnd-naval" class="text-amber-400 font-bold">$3.6B/qtr</span>
+                            </div>
+                            <input type="range" id="slider-dnd-naval" min="1.0" max="12.0" step="0.5" value="3.6" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updateDefensePolicy()">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-medium">
+                                <label class="text-slate-300">NORAD & Arctic Radar Infrastructure</label>
+                                <span id="val-dnd-norad" class="text-amber-400 font-bold">$2.1B/qtr</span>
+                            </div>
+                            <input type="range" id="slider-dnd-norad" min="0.5" max="8.0" step="0.5" value="2.1" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" oninput="updateDefensePolicy()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NUCLEAR WEAPONS PROGRAM CONSOLE BANNER -->
+                <div id="nuclear-program-banner" class="relative overflow-hidden bg-gradient-to-r from-purple-950 via-slate-900 to-rose-950 p-5 rounded-xl border border-rose-800/60 shadow-xl cursor-pointer transition hover:border-rose-500 group" onclick="openNuclearModal()">
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-rose-600/10 rounded-full blur-2xl group-hover:bg-rose-600/20 transition"></div>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-xl bg-rose-950 border border-rose-600/50 flex items-center justify-center text-rose-500 text-2xl shrink-0 animate-pulse-slow">
+                                <i class="fa-solid fa-radiation"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-bold text-slate-100 text-sm">Strategic Sovereign Nuclear Deterrent Matrix</h4>
+                                    <span id="nuke-status-badge" class="text-[10px] font-black tracking-widest px-2 py-0.5 rounded bg-rose-600 text-white animate-pulse">CLASSIFIED</span>
+                                </div>
+                                <p id="nuke-status-desc" class="text-xs text-slate-300 mt-1">Initiate Feasibility Analysis, Warhead Fabrication & Strategic Deployment Matrix.</p>
+                            </div>
+                        </div>
+                        <button class="px-4 py-2 bg-rose-600 group-hover:bg-rose-500 text-white font-bold rounded-lg text-xs transition shadow-lg shrink-0 flex items-center gap-2">
+                            <span id="nuke-btn-text">Open Nuclear Console</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <p class="text-slate-300">
+                        <i class="fa-solid fa-circle-info text-sky-400 mr-1"></i> Missile production and defense outlays directly stimulate Canadian high-tech manufacturing and aerospace exports.
+                    </p>
+                    <button onclick="executeDefenseAudit()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded text-xs transition cursor-pointer shrink-0">
+                        Run Joint Staff Readiness Audit
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 7: PRESS LEDGER -->
+        <section id="tab-news" class="tab-content hidden space-y-4 sm:space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4">
+                <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-100 text-xs sm:text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-newspaper text-indigo-400"></i> Global Financial Times & Event Ledger
+                    </h3>
+                    <button onclick="clearNewsLog()" class="text-xs text-slate-400 hover:text-white bg-slate-800 px-2.5 py-1 rounded border border-slate-700 cursor-pointer">Clear Logs</button>
+                </div>
+                <div class="space-y-2.5 max-h-[480px] overflow-y-auto pr-1" id="news-feed-container">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FULL NUCLEAR PROGRAM MODAL CONSOLE -->
+    <div id="nuclear-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-rose-600 rounded-2xl max-w-3xl w-full p-6 space-y-6 relative overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto">
+            <!-- Animated Hazard Background -->
+            <div class="absolute inset-0 hazard-bg opacity-20 pointer-events-none"></div>
+
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 relative z-10">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-950 border border-rose-500 flex items-center justify-center text-rose-500 text-xl animate-spin" style="animation-duration: 8s;">
+                        <i class="fa-solid fa-radiation"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-slate-100 text-base tracking-wide">CANADIAN NUCLEAR PROGRAM CONSOLE</h3>
+                            <span id="nuke-modal-phase-badge" class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-rose-600 text-white">UNAUTHORIZED</span>
+                        </div>
+                        <p class="text-xs text-rose-400 font-mono">TOP SECRET // DND CLEARANCE LEVEL 5 // WEAPONS OF MASS DESTRUCTION</p>
+                    </div>
+                </div>
+                <button onclick="closeNuclearModal()" class="text-slate-400 hover:text-white text-xl font-bold p-1 cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- DYNAMIC UI SCREEN CONTAINER -->
+            <div id="nuclear-console-body" class="relative z-10 space-y-4">
+                <!-- RENDERED DYNAMICALLY VIA JavaScript -->
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-800 relative z-10">
+                <button onclick="closeNuclearModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg text-xs transition cursor-pointer">
+                    Close Console
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-3 px-4 sm:px-8 mt-auto text-[11px] text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div>EconoMaster Engine v5.5 &copy; 2026. Canada Sovereign Fiscal, Trade & Defence Simulator.</div>
+        <div class="flex items-center gap-4">
+            <button onclick="openThumbTabModal()" class="px-3 py-1 bg-sky-950 hover:bg-sky-900 text-sky-400 border border-sky-800 rounded text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5">
+                <i class="fa-solid fa-scissors"></i> I want to cut the line
+            </button>
+            <span class="hover:text-slate-300 cursor-pointer" onclick="switchTab('policy')">Policy</span>
+            <span class="hover:text-slate-300 cursor-pointer" onclick="switchTab('defense')">Defence</span>
+            <span class="hover:text-slate-300 cursor-pointer" onclick="switchTab('dashboard')">Dashboard</span>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC & FULL INTEGRATION -->
+    <script>
+        const gameState = {
+            quarter: 1,
+            year: 1,
+            gdp: 2940.0, 
+            gdpGrowthRate: 2.1, 
+            cpiInflation: 2.2, 
+            unemploymentRate: 5.6, 
+            bocRate: 3.50, 
+            usFedRate: 4.00, 
+            debtToGdp: 62.0, 
+            nationalDebt: 1822.0, 
+            budgetDeficit: 18.5, 
+            cadToUsd: 0.752, 
+            tradeBalance: 6.2, 
+            oilPrice: 82.0, 
+            publicApproval: 58, 
+            carbonPrice: 30, 
+            
+            // Baseline Taxes
+            pit: 22, 
+            cit: 13, 
+            gst: 5,  
+            
+            capGainsRate: 40,
+            smallBizTax: 8.0,
+            migrationInflow: 80, 
+
+            // 10 NEW CONFIGURABLE METRICS
+            propTaxRate: 1.2,        // 1. Property Tax Assessment Base (%)
+            infraMultiplier: 1.4,    // 2. Federal Infrastructure Multiplier (x)
+            cleanItcRate: 15,        // 3. Clean Energy Investment Tax Credit (%)
+            royaltyRate: 8.5,        // 4. Resource Royalty Rate (%)
+            wealthTaxRate: 0.5,      // 5. Wealth Tax (%)
+            bankLevyRate: 0.15,      // 6. Bank Financial Transactions Levy (%)
+            tariffBaseRate: 2.0,     // 7. Import Tariff Base Rate (%)
+            unionPowerIndex: 50,     // 8. Union Bargaining Power Index (10-100)
+            rdRebateRate: 12,        // 9. Federal R&D Innovation Rebate (%)
+            fdiIncentiveRate: 6.0,   // 10. FDI Capital Incentive Rate (%)
+
+            funding: {
+                health: 85.0,
+                education: 48.0,
+                research: 16.0,
+                police: 28.0,
+                transport: 30.0,
+                environment: 10.0,
+                housing: 20.0,
+                veterans: 14.0,
+                childcare: 15.0
+            },
+
+            defense: {
+                troops: 71.5,
+                reserves: 3.2,
+                cyber: 2.5,
+                air: 4.8,
+                naval: 3.6,
+                norad: 2.1,
+                interceptorProd: 250,
+                hypersonicProd: 80,
+                missileStockpile: 2450
+            },
+
+            nptCompliant: true,
+            
+            // NUCLEAR PROGRAM ENGINE STATE MATRIX
+            nuclear: {
+                state: 'uninitiated',
+                feasibilityQuarterCount: 0,
+                constructionQuarterCount: 0,
+                fundingApproved: false,
+                quarterlyProgramCost: 1.5,
+                stockpile: {
+                    tactical: 0,
+                    thermonuclear: 0,
+                    cobalt: 0
+                }
+            },
+
+            reserveRatio: 3.0,
+            monetaryLagQueue: [3.50, 3.50, 3.50], 
+            bondRiskSpread: 0.0, 
+            
+            industries: {
+                oil_gas: { name: "1. Oil, Gas & Mining", output: 360, duty: 1.5, exportTax: 1.0, subsidy: 10.0, exoneration: false, pricePerTon: 880 },
+                auto_mfg: { name: "2. Automotive & Heavy Mfg", output: 300, duty: 2.5, exportTax: 0.0, subsidy: 12.0, exoneration: false, pricePerTon: 1420 },
+                tech_ai: { name: "3. Tech, AI & Software", output: 280, duty: 0.5, exportTax: 0.0, subsidy: 16.0, exoneration: true, pricePerTon: 3300 },
+                real_estate: { name: "4. Real Estate & Construction", output: 410, duty: 0.0, exportTax: 0.0, subsidy: 3.0, exoneration: false, pricePerTon: 2150 },
+                agri_food: { name: "5. Agriculture & Food Processing", output: 150, duty: 3.0, exportTax: 0.5, subsidy: 8.0, exoneration: false, pricePerTon: 460 },
+                finance_bank: { name: "6. Banking & Financial Services", output: 380, duty: 0.0, exportTax: 0.0, subsidy: 2.0, exoneration: false, pricePerTon: 5100 },
+                aerospace: { name: "7. Aerospace & Defense", output: 125, duty: 1.0, exportTax: 1.0, subsidy: 18.0, exoneration: true, pricePerTon: 7800 },
+                forestry: { name: "8. Forestry & Wood Products", output: 100, duty: 2.0, exportTax: 1.5, subsidy: 5.0, exoneration: false, pricePerTon: 390 },
+                pharma_bio: { name: "9. Pharmaceuticals & Biotech", output: 135, duty: 1.0, exportTax: 0.0, subsidy: 14.0, exoneration: false, pricePerTon: 6300 },
+                clean_energy: { name: "10. Clean Energy & Renewables", output: 110, duty: 1.0, exportTax: 0.0, subsidy: 15.0, exoneration: false, pricePerTon: 970 },
+                telecom: { name: "11. Telecommunications & Media", output: 185, duty: 0.0, exportTax: 0.0, subsidy: 2.0, exoneration: false, pricePerTon: 2450 },
+                tourism: { name: "12. Tourism & Hospitality", output: 125, duty: 0.0, exportTax: 0.0, subsidy: 5.0, exoneration: false, pricePerTon: 1120 },
+                fisheries: { name: "13. Fisheries & Aquaculture", output: 70, duty: 2.5, exportTax: 1.0, subsidy: 3.0, exoneration: false, pricePerTon: 740 },
+                shipping_log: { name: "14. Shipping, Rail & Logistics", output: 160, duty: 0.5, exportTax: 0.0, subsidy: 9.0, exoneration: false, pricePerTon: 1280 },
+                chemicals: { name: "15. Chemicals & Plastics", output: 180, duty: 1.5, exportTax: 0.5, subsidy: 6.0, exoneration: false, pricePerTon: 1620 }
+            },
+
+            ftas: {
+                usmca: { name: "USMCA (North America)", active: true, allyScore: 95, bonus: "Tariff-free automotive & energy access", tradeValue: 12.5 },
+                ceta: { name: "CETA (European Union)", active: true, allyScore: 85, bonus: "98% industrial tariff elimination", tradeValue: 5.2 },
+                uk_fta: { name: "UK-Canada Continuity FTA", active: true, allyScore: 90, bonus: "Preserved bilateral financial trade", tradeValue: 3.8 },
+                cptpp: { name: "CPTPP (Indo-Pacific)", active: true, allyScore: 80, bonus: "Access to Japan, Australia & Vietnam", tradeValue: 4.5 },
+                germany_pact: { name: "German-Canadian Industrial Accord", active: true, allyScore: 85, bonus: "Hydrogen and critical minerals export corridor", tradeValue: 3.0 },
+                aukus_minerals: { name: "AUKUS Defense & Mineral Pact", active: true, allyScore: 92, bonus: "Enhanced naval tech & defense manufacturing sharing", tradeValue: 2.5 },
+                latin_trade: { name: "Pacific Alliance FTA", active: false, allyScore: 60, bonus: "Latin American mining & tech corridors", tradeValue: 2.0 },
+                india_cepa: { name: "India-Canada CEPA", active: false, allyScore: 55, bonus: "Expanded tech services & agricultural exports", tradeValue: 3.5 },
+                afcfta: { name: "African Continental FTA (AfCFTA Partner)", active: false, allyScore: 45, bonus: "Access to emerging African mineral & trade hubs", tradeValue: 2.2 },
+                mercosur: { name: "MERCOSUR-Canada Strategic Trade Pact", active: false, allyScore: 50, bonus: "Agricultural tariff offsets & industrial machinery exports", tradeValue: 2.8 },
+                asean: { name: "ASEAN Economic Alliance", active: false, allyScore: 65, bonus: "Southeast Asian semiconductor & manufacturing pipeline", tradeValue: 3.2 }
+            },
+
+            associations: {
+                un_core: { name: "United Nations Core Budget", funded: true, cost: 4.5, desc: "Mandatory UN membership dues. Opting out tanks global standing & approval.", approvalImpact: 8, gdpImpact: 0.1, bondRisk: 0.15 },
+                un_climate: { name: "UN Climate Adaptation Fund", funded: false, cost: 8.0, desc: "Multilateral climate grants. Funding boosts environmental approval & clean tech output.", approvalImpact: 5, gdpImpact: 0.15, bondRisk: 0.05 },
+                who: { name: "World Health Organization", funded: true, cost: 3.2, desc: "Global health surveillance and standards. Opting out hurts public trust.", approvalImpact: 6, gdpImpact: 0.08, bondRisk: 0.05 },
+                nato: { name: "NATO Collective Defense Alliance", funded: true, cost: 14.5, desc: "Transatlantic security and intelligence sharing. Defunding causes severe diplomatic backlash.", approvalImpact: 10, gdpImpact: 0.25, bondRisk: 0.35 },
+                WEF: { name: "World Economic Forum Partnership", funded: false, cost: 2.0, desc: "Global economic policy forums.", approvalImpact: 3, gdpImpact: 0.05, bondRisk: 0.0 },
+                commonwealth: { name: "Commonwealth of Nations", funded: true, cost: 2.5, desc: "Diplomatic and legislative cooperation across member states.", approvalImpact: 4, gdpImpact: 0.05, bondRisk: 0.02 },
+                wto: { name: "World Trade Organization (WTO)", funded: true, cost: 3.0, desc: "Global trade dispute resolution and tariff arbitration. Opting out raises export barriers.", approvalImpact: 7, gdpImpact: 0.3, bondRisk: 0.2 },
+                arctic_council: { name: "Arctic Council Sovereignty Framework", funded: true, cost: 5.0, desc: "Multi-nation polar defense, icebreaking coordination & environmental monitoring.", approvalImpact: 6, gdpImpact: 0.12, bondRisk: 0.1 },
+                iea: { name: "International Energy Agency (IEA)", funded: true, cost: 2.8, desc: "Global oil reserves balancing and energy market stabilization.", approvalImpact: 5, gdpImpact: 0.1, bondRisk: 0.05 },
+                cyber_coalition: { name: "Global AI & Cyber Security Coalition", funded: true, cost: 4.0, desc: "Bilateral defense against state-sponsored cyber offensives.", approvalImpact: 5, gdpImpact: 0.15, bondRisk: 0.08 }
+            },
+
+            history: {
+                labels: ["Y1 Q1"],
+                gdpGrowth: [2.1],
+                inflation: [2.2],
+                bocRate: [3.50],
+                debtGdp: [62.0]
+            },
+            logs: []
+        };
+
+        let consecutiveZeroApprovalQuarters = 0;
+        let macroChartObj = null;
+        let financeChartObj = null;
+
+        // --- SAVE / LOAD & PORTABLE THUMB TAB SYSTEM ---
+        function saveGameToStorage() {
+            try {
+                localStorage.setItem('econmaster_save_v55', JSON.stringify(gameState));
+            } catch (e) {
+                console.error("Save error:", e);
+            }
+        }
+
+        function loadGameFromStorage() {
+            try {
+                const saved = localStorage.getItem('econmaster_save_v55');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    Object.assign(gameState, parsed);
+                    return true;
+                }
+            } catch (e) {
+                console.error("Load error:", e);
+            }
+            return false;
+        }
+
+        function openThumbTabModal() {
+            document.getElementById('thumb-tab-modal').classList.remove('hidden');
+        }
+
+        function closeThumbTabModal() {
+            document.getElementById('thumb-tab-modal').classList.add('hidden');
+        }
+
+        function exportGameSave() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gameState, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `EconoMaster_Save_Y${gameState.year}_Q${gameState.quarter}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+            logNews('PORTABLE THUMB TAB', 'Game state successfully exported as a Portable JSON save file.', 'success');
+        }
+
+        function importGameSave(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && imported.quarter && imported.year) {
+                        Object.assign(gameState, imported);
+                        saveGameToStorage();
+                        refreshAllUI();
+                        closeThumbTabModal();
+                        logNews('PORTABLE THUMB TAB', 'Game state successfully imported from JSON save file!', 'success');
+                    } else {
+                        alert('Invalid save file format.');
+                    }
+                } catch (err) {
+                    alert('Error parsing JSON save file.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function forceResetGame() {
+            if (confirm("Are you sure you want to forcefully reset the game and wipe saved memory?")) {
+                localStorage.removeItem('econmaster_save_v55');
+                location.reload();
+            }
+        }
+
+        function resetGameToDefault() {
+            localStorage.removeItem('econmaster_save_v55');
+            location.reload();
+        }
+
+        function triggerGameOver(reasonText) {
+            document.getElementById('game-over-reason').innerText = reasonText;
+            document.getElementById('game-over-modal').classList.remove('hidden');
+        }
+
+        function refreshAllUI() {
+            document.getElementById('current-quarter-display').innerText = `Year ${gameState.year} - Q${gameState.quarter}`;
+            renderKPIs();
+            renderFundingSliders();
+            renderIndustries();
+            renderFtas();
+            renderAssociations();
+            updatePolicies();
+            updateDefensePolicy();
+            updateNuclearBannerUI();
+            initCharts();
+        }
+
+        function initCharts() {
+            try {
+                const ctxMacro = document.getElementById('macroChart').getContext('2d');
+                if (macroChartObj) macroChartObj.destroy();
+                macroChartObj = new Chart(ctxMacro, {
+                    type: 'line',
+                    data: {
+                        labels: gameState.history.labels,
+                        datasets: [
+                            {
+                                label: 'GDP Growth (%)',
+                                data: gameState.history.gdpGrowth,
+                                borderColor: '#38bdf8',
+                                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Inflation (%)',
+                                data: gameState.history.inflation,
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                borderDash: [4, 4],
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+                        scales: {
+                            x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e293b' } },
+                            y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e293b' } }
+                        }
+                    }
+                });
+
+                const ctxFinance = document.getElementById('financeChart').getContext('2d');
+                if (financeChartObj) financeChartObj.destroy();
+                financeChartObj = new Chart(ctxFinance, {
+                    type: 'line',
+                    data: {
+                        labels: gameState.history.labels,
+                        datasets: [
+                            {
+                                label: 'Bond Yield (%)',
+                                data: gameState.history.bocRate,
+                                borderColor: '#10b981',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                tension: 0.2
+                            },
+                            {
+                                label: 'Debt-to-GDP (%)',
+                                data: gameState.history.debtGdp,
+                                borderColor: '#f43f5e',
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                tension: 0.2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+                        scales: {
+                            x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e293b' } },
+                            y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#1e293b' } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Chart initialization error fallback triggered:", err);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`tab-${tabId}`);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('#nav-tabs button').forEach(btn => btn.classList.remove('active'));
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+
+            if (tabId === 'dashboard') {
+                setTimeout(() => {
+                    if (macroChartObj) macroChartObj.resize();
+                    if (financeChartObj) financeChartObj.resize();
+                }, 50);
+            }
+        }
+
+        function updatePolicies() {
+            try {
+                gameState.pit = parseFloat(document.getElementById('slider-pit').value) || 22;
+                gameState.cit = parseFloat(document.getElementById('slider-cit').value) || 13;
+                gameState.gst = parseFloat(document.getElementById('slider-gst').value) || 5;
+                gameState.carbonPrice = parseFloat(document.getElementById('slider-carbon').value) || 30;
+
+                gameState.capGainsRate = parseFloat(document.getElementById('slider-capgains').value) || 40;
+                gameState.bocRate = parseFloat(document.getElementById('slider-boc-rate').value) || 3.50;
+                gameState.reserveRatio = parseFloat(document.getElementById('slider-reserve').value) || 3.0;
+
+                gameState.propTaxRate = parseFloat(document.getElementById('slider-prop-tax').value) || 1.2;
+                gameState.infraMultiplier = parseFloat(document.getElementById('slider-infra-mult').value) || 1.4;
+                gameState.cleanItcRate = parseFloat(document.getElementById('slider-clean-itc').value) || 15;
+                gameState.royaltyRate = parseFloat(document.getElementById('slider-royalty-rate').value) || 8.5;
+                gameState.wealthTaxRate = parseFloat(document.getElementById('slider-wealth-tax').value) || 0.5;
+                gameState.bankLevyRate = parseFloat(document.getElementById('slider-bank-levy').value) || 0.15;
+                gameState.tariffBaseRate = parseFloat(document.getElementById('slider-tariff-base').value) || 2.0;
+                gameState.unionPowerIndex = parseFloat(document.getElementById('slider-union-power').value) || 50;
+                gameState.rdRebateRate = parseFloat(document.getElementById('slider-rd-rebate').value) || 12;
+                gameState.fdiIncentiveRate = parseFloat(document.getElementById('slider-fdi-incentive').value) || 6.0;
+
+                document.getElementById('val-pit').innerText = gameState.pit + '%';
+                document.getElementById('val-cit').innerText = gameState.cit + '%';
+                document.getElementById('val-gst').innerText = gameState.gst + '%';
+                document.getElementById('val-carbon').innerText = '$' + gameState.carbonPrice;
+                document.getElementById('val-capgains').innerText = gameState.capGainsRate + '%';
+                document.getElementById('val-boc-rate').innerText = gameState.bocRate.toFixed(2) + '%';
+                document.getElementById('val-reserve').innerText = gameState.reserveRatio.toFixed(1) + '%';
+
+                document.getElementById('val-prop-tax').innerText = gameState.propTaxRate.toFixed(1) + '%';
+                document.getElementById('val-infra-mult').innerText = gameState.infraMultiplier.toFixed(1) + 'x';
+                document.getElementById('val-clean-itc').innerText = gameState.cleanItcRate + '%';
+                document.getElementById('val-royalty-rate').innerText = gameState.royaltyRate.toFixed(1) + '%';
+                document.getElementById('val-wealth-tax').innerText = gameState.wealthTaxRate.toFixed(2) + '%';
+                document.getElementById('val-bank-levy').innerText = gameState.bankLevyRate.toFixed(2) + '%';
+                document.getElementById('val-tariff-base').innerText = gameState.tariffBaseRate.toFixed(1) + '%';
+                document.getElementById('val-union-power').innerText = gameState.unionPowerIndex;
+                document.getElementById('val-rd-rebate').innerText = gameState.rdRebateRate + '%';
+                document.getElementById('val-fdi-incentive').innerText = gameState.fdiIncentiveRate.toFixed(1) + '%';
+
+                gameState.industries.clean_energy.subsidy = 10 + (gameState.cleanItcRate * 0.5);
+                gameState.industries.tech_ai.subsidy = 10 + (gameState.rdRebateRate * 0.6);
+                gameState.industries.oil_gas.exportTax = gameState.royaltyRate * 0.1;
+                gameState.cadToUsd = parseFloat((0.72 + (gameState.fdiIncentiveRate * 0.005) - (gameState.wealthTaxRate * 0.01)).toFixed(3));
+
+            } catch (err) {
+                console.error("Policy update error:", err);
+            }
+        }
+
+        function updateFunding(category, val) {
+            gameState.funding[category] = parseFloat(val) || 0;
+            const displayEl = document.getElementById(`val-fund-${category}`);
+            if (displayEl) {
+                displayEl.innerText = '$' + parseFloat(val).toFixed(1) + 'B';
+            }
+            updateTotalOutlays();
+        }
+
+        function updateDefensePolicy() {
+            gameState.defense.troops = parseFloat(document.getElementById('slider-dnd-troops').value) || 71.5;
+            gameState.defense.reserves = parseFloat(document.getElementById('slider-dnd-reserves').value) || 3.2;
+            gameState.defense.cyber = parseFloat(document.getElementById('slider-dnd-cyber').value) || 2.5;
+            gameState.defense.air = parseFloat(document.getElementById('slider-dnd-air').value) || 4.8;
+            gameState.defense.naval = parseFloat(document.getElementById('slider-dnd-naval').value) || 3.6;
+            gameState.defense.norad = parseFloat(document.getElementById('slider-dnd-norad').value) || 2.1;
+            gameState.defense.interceptorProd = parseInt(document.getElementById('slider-dnd-interceptor').value) || 250;
+            gameState.defense.hypersonicProd = parseInt(document.getElementById('slider-dnd-hypersonic').value) || 80;
+
+            document.getElementById('val-dnd-troops').innerText = gameState.defense.troops.toFixed(1) + 'K';
+            document.getElementById('val-dnd-reserves').innerText = '$' + gameState.defense.reserves.toFixed(1) + 'B/qtr';
+            document.getElementById('val-dnd-cyber').innerText = '$' + gameState.defense.cyber.toFixed(1) + 'B/qtr';
+            document.getElementById('val-dnd-air').innerText = '$' + gameState.defense.air.toFixed(1) + 'B/qtr';
+            document.getElementById('val-dnd-naval').innerText = '$' + gameState.defense.naval.toFixed(1) + 'B/qtr';
+            document.getElementById('val-dnd-norad').innerText = '$' + gameState.defense.norad.toFixed(1) + 'B/qtr';
+
+            document.getElementById('val-dnd-interceptor').innerText = gameState.defense.interceptorProd + ' / qtr';
+            document.getElementById('val-dnd-hypersonic').innerText = gameState.defense.hypersonicProd + ' / qtr';
+
+            document.getElementById('dnd-personnel-val').innerText = (gameState.defense.troops * 1000).toLocaleString();
+            
+            gameState.industries.aerospace.output = 120 + ((gameState.defense.interceptorProd + gameState.defense.hypersonicProd) * 0.15);
+
+            const totalDef = getTotalDefenseCost();
+            document.getElementById('total-defense-display').innerText = '$' + totalDef.toFixed(1) + 'B / qtr';
+            updateTotalOutlays();
+        }
+
+        function toggleNptStatus() {
+            gameState.nptCompliant = !gameState.nptCompliant;
+            const btn = document.getElementById('npt-toggle-btn');
+            const display = document.getElementById('npt-status-display');
+
+            if (gameState.nptCompliant) {
+                btn.className = 'px-3 py-1.5 rounded text-xs font-bold transition cursor-pointer bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900';
+                btn.innerHTML = '<i class="fa-solid fa-check-double mr-1"></i> Ratified & Compliant';
+                display.innerText = 'Signatory (Compliant)';
+                display.className = 'text-xs font-bold text-emerald-400';
+                gameState.publicApproval += 2;
+                logNews('DIPLOMACY', 'Canada reaffirmed full compliance with the Non-Proliferation Treaty (NPT). IAEA relations normalized.', 'success');
+            } else {
+                btn.className = 'px-3 py-1.5 rounded text-xs font-bold transition cursor-pointer bg-rose-950 text-rose-400 border border-rose-800 hover:bg-rose-900';
+                btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Treaty Withdrawn';
+                display.innerText = 'Withdrawn (Unsanctioned)';
+                display.className = 'text-xs font-bold text-rose-400';
+                gameState.publicApproval -= 4;
+                logNews('SECURITY ALERT', 'Canada suspended participation in the Non-Proliferation Treaty (NPT). Sovereign defense capabilities expanded under international scrutiny.', 'alert');
+            }
+        }
+
+        /* --- NUCLEAR PROGRAM CONSOLE ENGINE LOGIC & FALLOUT --- */
+        function openNuclearModal() {
+            renderNuclearConsole();
+            document.getElementById('nuclear-modal').classList.remove('hidden');
+        }
+
+        function closeNuclearModal() {
+            document.getElementById('nuclear-modal').classList.add('hidden');
+        }
+
+        function startNuclearFeasibility() {
+            gameState.nuclear.state = 'feasibility_active';
+            gameState.nuclear.feasibilityQuarterCount = 0;
+            logNews('NUCLEAR CONSOLE', 'Sovereign Nuclear Feasibility Analysis initiated. Defense scientists & engineers assessing centrifuges & warhead design over 6 quarters.', 'alert');
+            renderNuclearConsole();
+            updateNuclearBannerUI();
+        }
+
+        function confirmNuclearFundingChoice(proceed) {
+            if (proceed) {
+                gameState.nuclear.state = 'construction_active';
+                gameState.nuclear.fundingApproved = true;
+                gameState.nuclear.constructionQuarterCount = 0;
+                if (gameState.nptCompliant) {
+                    toggleNptStatus();
+                }
+                logNews('NUCLEAR CONSOLE', 'SOVEREIGN DECISION: Cabinet approved $1.5B/qtr nuclear weapons development program. 12-quarter construction timeline launched!', 'alert');
+                
+                for (const f in gameState.ftas) {
+                    gameState.ftas[f].allyScore = Math.max(10, gameState.ftas[f].allyScore - 15);
+                }
+                renderFtas();
+            } else {
+                gameState.nuclear.state = 'uninitiated';
+                gameState.nuclear.feasibilityQuarterCount = 0;
+                gameState.nuclear.fundingApproved = false;
+                logNews('NUCLEAR CONSOLE', 'Sovereign decision: Feasibility analysis shelved. Canada declined $1.5B/qtr nuclear weapons investment.', 'info');
+            }
+            renderNuclearConsole();
+            updateNuclearBannerUI();
+        }
+
+        function dismantleWarhead(type) {
+            if (gameState.nuclear.stockpile[type] > 0) {
+                gameState.nuclear.stockpile[type]--;
+                gameState.publicApproval = Math.min(100, gameState.publicApproval + 3);
+                
+                for (const f in gameState.ftas) {
+                    gameState.ftas[f].allyScore = Math.min(100, gameState.ftas[f].allyScore + 4);
+                }
+                
+                logNews('NUCLEAR DISMANTLEMENT', `1x ${type.toUpperCase()} nuclear warhead dismantled under international oversight. Public approval increased (+3%) & FTA ally standings restored!`, 'success');
+                renderFtas();
+                renderKPIs();
+                renderNuclearConsole();
+            }
+        }
+
+        /* --- DYNAMIC CANVAS DEPLOYMENT ANIMATION OVERLAY ENGINE --- */
+        let nukeAnimId = null;
+        let pendingWarheadDeploymentType = null;
+
+        function deployNuclearWarhead(type) {
+            if (gameState.nuclear.stockpile[type] > 0) {
+                pendingWarheadDeploymentType = type;
+                closeNuclearModal();
+                launchNuclearDeploymentAnimation(type);
+            }
+        }
+
+        function executeNuclearFalloutLogic(type) {
+            if (gameState.nuclear.stockpile[type] > 0) {
+                gameState.nuclear.stockpile[type]--;
+            }
+            // Huge fallout metrics impact
+            gameState.publicApproval = 0;
+            gameState.gdpGrowthRate = parseFloat((gameState.gdpGrowthRate - 8.5).toFixed(2));
+            gameState.gdp = gameState.gdp * 0.90; // Massive 10% GDP shock from nuclear fallout & embargoes
+            gameState.cpiInflation = parseFloat((gameState.cpiInflation + 12.5).toFixed(2)); // Hyper-inflation spike
+            gameState.unemploymentRate = parseFloat((gameState.unemploymentRate + 4.5).toFixed(2));
+            
+            // Total global trade collapse & FTA severance
+            gameState.tradeBalance -= 25.0;
+            for (const f in gameState.ftas) {
+                gameState.ftas[f].active = false;
+                gameState.ftas[f].allyScore = 0;
+            }
+            for (const a in gameState.associations) {
+                gameState.associations[a].funded = false;
+            }
+            
+            consecutiveZeroApprovalQuarters = 4; // Trigger instant game over check
+            logNews('GLOBAL CATASTROPHE // NUCLEAR FALLOUT', `CRITICAL APOCALYPTIC EVENT: 1x ${type.toUpperCase()} WARHEAD DEPLOYED! Radioactive fallout, global trade embargoes, financial market collapse (-10% GDP), and total diplomatic severance triggered!`, 'alert');
+            
+            renderFtas();
+            renderAssociations();
+            renderKPIs();
+            renderNuclearConsole();
+            checkGameOver();
+        }
+
+        function abortNuclearDeployment() {
+            if (nukeAnimId) {
+                cancelAnimationFrame(nukeAnimId);
+                nukeAnimId = null;
+            }
+            const overlay = document.getElementById('nuke-deployment-overlay');
+            overlay.classList.add('hidden');
+            document.body.classList.remove('animate-nuke-shake');
+            pendingWarheadDeploymentType = null;
+            logNews('LAUNCH ABORTED', 'Nuclear warhead launch sequence aborted by sovereign command. Missile auto-destruct triggered safety disarm.', 'info');
+        }
+
+        function launchNuclearDeploymentAnimation(type) {
+            const overlay = document.getElementById('nuke-deployment-overlay');
+            const canvas = document.getElementById('nuke-canvas');
+            const ctx = canvas.getContext('2d');
+            const hudTitle = document.getElementById('nuke-hud-title');
+            const hudStatus = document.getElementById('nuke-hud-status');
+            const hudAlt = document.getElementById('nuke-hud-alt');
+            const hudTimer = document.getElementById('nuke-hud-timer');
+
+            hudTitle.innerText = `STRATEGIC DEPLOYMENT // ${type.toUpperCase()} WARHEAD`;
+            overlay.classList.remove('hidden');
+
+            // Responsive Canvas Resize
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            const resizeHandler = () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            };
+            window.addEventListener('resize', resizeHandler);
+
+            // Animation Timeline States (Duration <= 10.0 Seconds total)
+            // Phase 1 (0 to 3.5s): Missile travels smoothly across screen
+            // Phase 2 (3.5s to 5.0s): Juts sharply downwards toward screen bottom
+            // Phase 3 (5.0s to 8.5s): Explosion, mushroom cloud, particles & glass shattering
+            // Phase 4 (8.5s to 10.0s): Dissolve / Fade out & execute game fallout
+            const startTime = performance.now();
+            const totalDuration = 10000; // 10.0 Seconds Max
+
+            // Particle Systems Initialization
+            const shrapnel = [];
+            const cloudSparks = [];
+            const glassCracks = [];
+            
+            // Generate Realistic Glass Crack Lines emanating from bottom-center impact point
+            const impactX = width * 0.5;
+            const impactY = height * 0.88;
+
+            for (let i = 0; i < 22; i++) {
+                const angle = (Math.PI * 2 * (i / 22)) + ((Math.random() - 0.5) * 0.3);
+                const segments = [];
+                let currX = impactX;
+                let currY = impactY;
+                const length = Math.random() * (Math.max(width, height) * 0.7) + 150;
+                let stepCount = Math.floor(Math.random() * 5) + 4;
+                
+                for (let s = 0; s < stepCount; s++) {
+                    const stepLen = length / stepCount;
+                    const subAngle = angle + ((Math.random() - 0.5) * 0.4);
+                    currX += Math.cos(subAngle) * stepLen;
+                    currY += Math.sin(subAngle) * stepLen;
+                    segments.push({ x: currX, y: currY });
+                }
+                glassCracks.push(segments);
+            }
+
+            let missilePos = { x: -50, y: height * 0.25 };
+            let missileTrail = [];
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(1.0, elapsed / totalDuration);
+                const secondsLeft = Math.max(0, (10 - (elapsed / 1000))).toFixed(1);
+                hudTimer.innerText = `${secondsLeft}s`;
+
+                // Clear Frame
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.4)';
+                ctx.fillRect(0, 0, width, height);
+
+                // --- CANVAS SCENARIO DRAWING ---
+                if (elapsed < 3500) {
+                    // PHASE 1: Smooth horizontal/diagonal transit
+                    const p1 = elapsed / 3500;
+                    missilePos.x = -50 + (width * 0.65 + 50) * p1;
+                    missilePos.y = height * 0.25 + (Math.sin(p1 * Math.PI * 2) * 20);
+                    
+                    hudStatus.innerText = "TRANS-ATMOSPHERIC CRUISE";
+                    hudStatus.className = "text-amber-400 font-bold";
+                    hudAlt.innerText = `${Math.round(42000 - (p1 * 12000))} M`;
+
+                } else if (elapsed >= 3500 && elapsed < 5000) {
+                    // PHASE 2: Sudden jut straight downwards to bottom screen
+                    const p2 = (elapsed - 3500) / 1500;
+                    const startX = width * 0.65;
+                    const startY = height * 0.25;
+
+                    missilePos.x = startX + (impactX - startX) * p2;
+                    missilePos.y = startY + (impactY - startY) * Math.pow(p2, 2.5); // Exponential steep drop
+
+                    hudStatus.innerText = "TERMINAL RE-ENTRY // DIVE VECTOR LOCK";
+                    hudStatus.className = "text-rose-500 font-black animate-pulse";
+                    hudAlt.innerText = `${Math.round(30000 * (1 - p2))} M`;
+
+                } else if (elapsed >= 5000 && elapsed < 8500) {
+                    // PHASE 3: Detonation Impact, Mushroom Cloud, Particles & Glass Cracking
+                    hudStatus.innerText = "SOVEREIGN GROUND DETONATION";
+                    hudStatus.className = "text-rose-600 font-black";
+                    hudAlt.innerText = "0 M (SURFACE DETONATION)";
+                    
+                    if (elapsed < 5800) {
+                        document.body.classList.add('animate-nuke-shake');
+                    } else {
+                        document.body.classList.remove('animate-nuke-shake');
+                    }
+
+                    // Spawn Shrapnel Debris on initial detonation frame
+                    if (shrapnel.length === 0) {
+                        for (let i = 0; i < 90; i++) {
+                            const angle = Math.random() * Math.PI * 2;
+                            const speed = Math.random() * 18 + 6;
+                            shrapnel.push({
+                                x: impactX,
+                                y: impactY,
+                                vx: Math.cos(angle) * speed,
+                                vy: Math.sin(angle) * speed - (Math.random() * 8),
+                                size: Math.random() * 6 + 2,
+                                rot: Math.random() * Math.PI,
+                                vRot: (Math.random() - 0.5) * 0.3
+                            });
+                        }
+                    }
+
+                    // Spawn Thermal Cloud Sparks
+                    for (let i = 0; i < 4; i++) {
+                        cloudSparks.push({
+                            x: impactX + (Math.random() - 0.5) * 120,
+                            y: impactY - (Math.random() * 80),
+                            vx: (Math.random() - 0.5) * 4,
+                            vy: -Math.random() * 6 - 2,
+                            size: Math.random() * 4 + 1,
+                            life: 1.0
+                        });
+                    }
+                } else {
+                    // PHASE 4: Fade Out & Clean Up
+                    hudStatus.innerText = "WARHEAD IMPACT COMPLETE";
+                }
+
+                // DRAW TRAIL (Phases 1 & 2)
+                if (elapsed < 5000) {
+                    missileTrail.push({ x: missilePos.x, y: missilePos.y, alpha: 1.0 });
+                    if (missileTrail.length > 35) missileTrail.shift();
+
+                    ctx.beginPath();
+                    for (let i = 0; i < missileTrail.length; i++) {
+                        const pt = missileTrail[i];
+                        ctx.strokeStyle = `rgba(249, 115, 22, ${i / missileTrail.length})`;
+                        ctx.lineWidth = (i / missileTrail.length) * 8;
+                        if (i === 0) ctx.moveTo(pt.x, pt.y);
+                        else ctx.lineTo(pt.x, pt.y);
+                    }
+                    ctx.stroke();
+
+                    // Draw Strategic Missile Body & Nose Cone
+                    ctx.save();
+                    ctx.translate(missilePos.x, missilePos.y);
+                    
+                    let missileAngle = (elapsed < 3500) ? 0.15 : Math.atan2(impactY - missilePos.y, impactX - missilePos.x);
+                    ctx.rotate(missileAngle);
+
+                    // Missile Body Gradient
+                    const bodyGrad = ctx.createLinearGradient(-30, 0, 30, 0);
+                    bodyGrad.addColorStop(0, '#475569');
+                    bodyGrad.addColorStop(0.5, '#cbd5e1');
+                    bodyGrad.addColorStop(1, '#ef4444');
+
+                    ctx.fillStyle = bodyGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(35, 0);
+                    ctx.lineTo(-25, -7);
+                    ctx.lineTo(-35, -7);
+                    ctx.lineTo(-35, 7);
+                    ctx.lineTo(-25, 7);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Thruster Exhaust Flame Glow
+                    const flameGlow = ctx.createRadialGradient(-35, 0, 2, -35, 0, 25);
+                    flameGlow.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                    flameGlow.addColorStop(0.3, 'rgba(249, 115, 22, 0.9)');
+                    flameGlow.addColorStop(1, 'rgba(239, 68, 68, 0)');
+                    ctx.fillStyle = flameGlow;
+                    ctx.beginPath();
+                    ctx.arc(-35, 0, 25, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+
+                // DRAW DETONATION & MUSHROOM CLOUD (Phase 3)
+                if (elapsed >= 5000) {
+                    const blastTime = elapsed - 5000;
+                    const blastProgress = Math.min(1.0, blastTime / 3500);
+
+                    // 1. Initial Flash Shockwave Ring
+                    ctx.save();
+                    const shockRadius = blastProgress * (Math.max(width, height) * 0.9);
+                    const shockGrad = ctx.createRadialGradient(impactX, impactY, shockRadius * 0.7, impactX, impactY, shockRadius);
+                    shockGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+                    shockGrad.addColorStop(0.8, `rgba(251, 146, 60, ${1.0 - blastProgress})`);
+                    shockGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
+                    ctx.fillStyle = shockGrad;
+                    ctx.beginPath();
+                    ctx.arc(impactX, impactY, shockRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // 2. Rising Dynamic Mushroom Cloud & Core
+                    const cloudHeight = Math.min(height * 0.6, blastProgress * height * 0.65);
+                    const capY = impactY - cloudHeight;
+                    const capRadius = Math.min(width * 0.35, blastProgress * width * 0.4);
+
+                    // Mushroom Stem Column
+                    const stemGrad = ctx.createLinearGradient(impactX - capRadius * 0.3, impactY, impactX + capRadius * 0.3, impactY);
+                    stemGrad.addColorStop(0, 'rgba(15, 23, 42, 0.9)');
+                    stemGrad.addColorStop(0.3, 'rgba(239, 68, 68, 0.85)');
+                    stemGrad.addColorStop(0.7, 'rgba(245, 158, 11, 0.85)');
+                    stemGrad.addColorStop(1, 'rgba(15, 23, 42, 0.9)');
+
+                    ctx.fillStyle = stemGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(impactX - capRadius * 0.15, impactY);
+                    ctx.lineTo(impactX - capRadius * 0.35, capY + 30);
+                    ctx.lineTo(impactX + capRadius * 0.35, capY + 30);
+                    ctx.lineTo(impactX + capRadius * 0.15, impactY);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Cap Cloud Puffs
+                    const capGrad = ctx.createRadialGradient(impactX, capY, 10, impactX, capY, capRadius);
+                    capGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+                    capGrad.addColorStop(0.3, 'rgba(249, 115, 22, 0.85)');
+                    capGrad.addColorStop(0.65, 'rgba(225, 29, 72, 0.7)');
+                    capGrad.addColorStop(1, 'rgba(30, 41, 59, 0.85)');
+
+                    ctx.fillStyle = capGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(impactX, capY, capRadius, capRadius * 0.55, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 3. Flying Metal Shrapnel Physics Update & Draw
+                    for (let s of shrapnel) {
+                        s.x += s.vx;
+                        s.y += s.vy;
+                        s.vy += 0.2; // Gravity
+                        s.rot += s.vRot;
+
+                        ctx.save();
+                        ctx.translate(s.x, s.y);
+                        ctx.rotate(s.rot);
+                        ctx.fillStyle = '#f87171';
+                        ctx.fillRect(-s.size / 2, -s.size / 2, s.size, s.size * 1.5);
+                        ctx.restore();
+                    }
+
+                    // 4. Cloud Sparks & Debris Update
+                    for (let i = cloudSparks.length - 1; i >= 0; i--) {
+                        let sp = cloudSparks[i];
+                        sp.x += sp.vx;
+                        sp.y += sp.vy;
+                        sp.life -= 0.015;
+                        if (sp.life <= 0) {
+                            cloudSparks.splice(i, 1);
+                            continue;
+                        }
+                        ctx.fillStyle = `rgba(254, 240, 138, ${sp.life})`;
+                        ctx.beginPath();
+                        ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // 5. Screen Glass Crack Visual Overlay
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+                    ctx.shadowColor = 'rgba(239, 68, 68, 0.9)';
+                    ctx.shadowBlur = 8;
+                    ctx.lineWidth = 1.8;
+
+                    for (let crack of glassCracks) {
+                        ctx.beginPath();
+                        ctx.moveTo(impactX, impactY);
+                        for (let pt of crack) {
+                            ctx.lineTo(pt.x, pt.y);
+                        }
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+
+                // Check standard completion timing or cancel request
+                if (elapsed < totalDuration) {
+                    nukeAnimId = requestAnimationFrame(animate);
+                } else {
+                    // Animation complete: Clean up overlay and trigger fallout logic
+                    nukeAnimId = null;
+                    window.removeEventListener('resize', resizeHandler);
+                    document.body.classList.remove('animate-nuke-shake');
+                    overlay.classList.add('hidden');
+                    
+                    if (pendingWarheadDeploymentType) {
+                        executeNuclearFalloutLogic(pendingWarheadDeploymentType);
+                        pendingWarheadDeploymentType = null;
+                    }
+                }
+            }
+
+            // Start animation loop
+            nukeAnimId = requestAnimationFrame(animate);
+        }
+
+        function updateNuclearBannerUI() {
+            const badge = document.getElementById('nuke-status-badge');
+            const desc = document.getElementById('nuke-status-desc');
+            const btnText = document.getElementById('nuke-btn-text');
+            const st = gameState.nuclear.state;
+
+            if (st === 'uninitiated') {
+                badge.innerText = 'UNINITIATED';
+                badge.className = 'text-[10px] font-black tracking-widest px-2 py-0.5 rounded bg-rose-600 text-white animate-pulse';
+                desc.innerText = 'Start acquiring Weapons of Mass Destruction with full strategic capabilities.';
+                btnText.innerText = 'Start Feasibility Analysis';
+            } else if (st === 'feasibility_active') {
+                badge.innerText = `FEASIBILITY (${gameState.nuclear.feasibilityQuarterCount}/6 Qtrs)`;
+                badge.className = 'text-[10px] font-black tracking-widest px-2 py-0.5 rounded bg-amber-600 text-white animate-pulse';
+                desc.innerText = 'Sovereign scientists evaluating centrifuges, heavy water reactors & delivery vector designs.';
+                btnText.innerText = 'View Progress';
+            } else if (st === 'feasibility_complete') {
+                badge.innerText = 'DECISION REQUIRED';
+                badge.className = 'text-[10px] font-black tracking-widest px-2 py-0.5 rounded bg-purple-600 text-white animate-bounce';
+                desc.innerText = 'Feasibility Analysis Complete! Cabinet decision required on $1.5B/qtr funding.';
+                btnText.innerText = 'Open Decision Sheet';
+            } else if (st === 'construction_active') {
+                badge.innerText = `BUILDING (${gameState.nuclear.constructionQuarterCount}/12 Qtrs)`;
+                badge.className = 'text-[10px] font-black tracking-widest px-2 py-0.5 rounded bg-rose-700 text-white animate-pulse';
+                desc.innerText = 'Enrichment facilities & warhead manufacturing underway ($1.5B/qtr outlay).';
+                btnText.innerText = 'View Construction Status';
+            } else if (st === 'stockpile_unlocked') {
+                const totalWarheads = gameState.nuclear.stockpile.tactical + gameState.nuclear.stockpile.thermonuclear + gameState.nuclear.stockpile.cobalt;
+                badge.innerText = `ACTIVE STOCKPILE (${totalWarheads} WARHEADS)`;
+                badge.className = 'text-[10px] font-black tracking-widest px-2 py-0.5 rounded bg-emerald-600 text-white';
+                desc.innerText = 'Sovereign Nuclear Deterrent active! Manage stockpile, deployment & dismantlement.';
+                btnText.innerText = 'Open Stockpile & Inventory';
+            }
+        }
+
+        function renderNuclearConsole() {
+            const body = document.getElementById('nuclear-console-body');
+            const badge = document.getElementById('nuke-modal-phase-badge');
+            const st = gameState.nuclear.state;
+
+            if (st === 'uninitiated') {
+                badge.innerText = 'DEFAULT SCREEN // UNINITIATED';
+                badge.className = 'text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-rose-600 text-white';
+                
+                body.innerHTML = `
+                    <div class="relative bg-slate-950 border-2 border-rose-900/60 rounded-xl p-8 flex flex-col items-center justify-center text-center space-y-5 overflow-hidden shadow-2xl">
+                        <div class="absolute inset-0 hazard-bg opacity-30"></div>
+                        <div class="relative z-10 w-24 h-24 rounded-full bg-rose-950 border-2 border-rose-500 flex items-center justify-center text-rose-500 text-5xl shadow-xl shadow-rose-900/50 animate-pulse">
+                            <i class="fa-solid fa-radiation"></i>
+                        </div>
+                        <div class="relative z-10 space-y-2 max-w-lg">
+                            <h3 class="text-xl font-black text-slate-100 tracking-wider uppercase">Start Acquiring Weapons of Mass Destruction</h3>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                Establish an independent sovereign nuclear triad. Initiating this classified program requires a mandatory <strong class="text-amber-400">6-Quarter Feasibility Analysis</strong> to assess heavy water enrichment, missile warhead miniaturization, and clandestine supply chain logistics.
+                            </p>
+                        </div>
+                        <button onclick="startNuclearFeasibility()" class="relative z-10 px-6 py-3 bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold rounded-xl text-sm transition shadow-xl cursor-pointer flex items-center gap-2">
+                            <i class="fa-solid fa-flask font-bold"></i>
+                            <span>Initiate 6-Quarter Feasibility Analysis</span>
+                        </button>
+                    </div>
+                `;
+            } else if (st === 'feasibility_active') {
+                badge.innerText = `FEASIBILITY IN PROGRESS (${gameState.nuclear.feasibilityQuarterCount}/6 QTRS)`;
+                badge.className = 'text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-amber-600 text-white';
+
+                body.innerHTML = `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 space-y-6 text-center">
+                        <div class="w-16 h-16 rounded-full bg-amber-950/60 border border-amber-500 mx-auto flex items-center justify-center text-amber-400 text-3xl animate-spin" style="animation-duration: 6s;">
+                            <i class="fa-solid fa-atom"></i>
+                        </div>
+                        <div class="space-y-2 max-w-md mx-auto">
+                            <h4 class="font-bold text-slate-100 text-base">Feasibility Analysis In Progress...</h4>
+                            <p class="text-xs text-slate-400">Canadian nuclear scientists and DND engineers are synthesizing enrichment data. Advance turns to complete the 6-quarter evaluation.</p>
+                        </div>
+                        <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden max-w-md mx-auto border border-slate-700">
+                            <div class="bg-gradient-to-r from-amber-500 to-rose-500 h-full transition-all duration-300" style="width: ${(gameState.nuclear.feasibilityQuarterCount / 6) * 100}%"></div>
+                        </div>
+                        <span class="text-xs font-mono text-amber-400 font-bold block">${gameState.nuclear.feasibilityQuarterCount} of 6 Quarters Completed</span>
+                    </div>
+                `;
+            } else if (st === 'feasibility_complete') {
+                badge.innerText = 'FEASIBILITY COMPLETE // SHEET DECISION';
+                badge.className = 'text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-purple-600 text-white';
+
+                body.innerHTML = `
+                    <div class="bg-slate-950 border-2 border-purple-600/80 rounded-xl p-6 space-y-6">
+                        <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+                            <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-scroll text-purple-400"></i> FEASIBILITY ANALYSIS EXECUTIVE SHEET
+                            </h4>
+                            <span class="text-[10px] bg-purple-950 text-purple-300 border border-purple-800 px-2 py-0.5 rounded font-bold">TOP SECRET REPORT</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-3 text-xs text-slate-300 leading-relaxed">
+                            <p><strong class="text-purple-400">Analysis Summary:</strong> Canada possesses sufficient domestic uranium reserves (Saskatchewan Basin) and CANDU heavy-water reactor infrastructure to fabricate weapon-grade Plutonium-239 and Enriched Uranium-235.</p>
+                            <div class="p-3 bg-purple-950/40 border border-purple-800/60 rounded-lg text-purple-200 font-bold text-center">
+                                "Would you like to proceed with funding worth $1.5b of your economy per quarter towards your nuclear program?"
+                            </div>
+                            <p class="text-[11px] text-slate-400 italic">* Proceeding launches a 12-quarter warhead construction program. Rejecting shelving the program and returns to the default UI screen.</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="confirmNuclearFundingChoice(true)" class="py-3 bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs transition shadow-lg cursor-pointer flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check-double"></i>
+                                <span>YES — Commit $1.5B/qtr (12 Qtr Build)</span>
+                            </button>
+                            <button onclick="confirmNuclearFundingChoice(false)" class="py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-xmark"></i>
+                                <span>NO — Cancel Program</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (st === 'construction_active') {
+                badge.innerText = `FABRICATION IN PROGRESS (${gameState.nuclear.constructionQuarterCount}/12 QTRS)`;
+                badge.className = 'text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-rose-700 text-white';
+
+                body.innerHTML = `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 space-y-6 text-center">
+                        <div class="w-16 h-16 rounded-full bg-rose-950/60 border border-rose-500 mx-auto flex items-center justify-center text-rose-500 text-3xl animate-pulse">
+                            <i class="fa-solid fa-industry"></i>
+                        </div>
+                        <div class="space-y-2 max-w-md mx-auto">
+                            <h4 class="font-bold text-slate-100 text-base">Centrifuges & Warhead Fabrication Active</h4>
+                            <p class="text-xs text-slate-400">Consuming $1.5B/quarter from sovereign outlays. Enriching core isotopes and assembling initial warhead stockpiles over 12 quarters.</p>
+                        </div>
+                        <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden max-w-md mx-auto border border-slate-700">
+                            <div class="bg-gradient-to-r from-purple-600 via-rose-600 to-amber-500 h-full transition-all duration-300" style="width: ${(gameState.nuclear.constructionQuarterCount / 12) * 100}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center max-w-md mx-auto text-xs font-mono text-slate-400">
+                            <span>Quarterly Cost: <strong class="text-rose-400">$1.5B</strong></span>
+                            <span class="text-amber-400 font-bold">${gameState.nuclear.constructionQuarterCount} of 12 Quarters</span>
+                        </div>
+                    </div>
+                `;
+            } else if (st === 'stockpile_unlocked') {
+                badge.innerText = 'INVENTORY & STOCKPILE UI // ACTIVE DETERRENT';
+                badge.className = 'text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-600 text-white';
+
+                const totalWarheads = gameState.nuclear.stockpile.tactical + gameState.nuclear.stockpile.thermonuclear + gameState.nuclear.stockpile.cobalt;
+
+                body.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase block">Total Warheads</span>
+                                <span class="text-xl font-extrabold text-emerald-400">${totalWarheads} Units</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase block">Status</span>
+                                <span class="text-xs font-bold text-rose-400">Armed & Ready</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase block">FTA Ally Impact</span>
+                                <span class="text-xs font-bold text-amber-400">-15% Penalty</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase block">Dismantlement Boost</span>
+                                <span class="text-xs font-bold text-sky-400">+3% Approval/unit</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 flex flex-col justify-between">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <h5 class="font-bold text-slate-100 text-xs">1. Tactical W80-4 Low-Yield</h5>
+                                        <span class="text-[10px] bg-amber-950 text-amber-400 px-1.5 py-0.5 rounded border border-amber-800 font-mono">5.0 kt</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400">Precision theater nuclear warhead. Designed for localized tactical strike vector options.</p>
+                                    <div class="text-lg font-black text-amber-400">${gameState.nuclear.stockpile.tactical} <span class="text-xs text-slate-400 font-normal">in stock</span></div>
+                                </div>
+                                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                                    <button onclick="dismantleWarhead('tactical')" class="w-full py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded font-bold text-[11px] transition cursor-pointer">
+                                        <i class="fa-solid fa-wrench mr-1"></i> Dismantle (+Approval / Restores FTAs)
+                                    </button>
+                                    <button onclick="deployNuclearWarhead('tactical')" class="w-full py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-400 border border-rose-800 rounded font-bold text-[11px] transition cursor-pointer">
+                                        <i class="fa-solid fa-radiation mr-1"></i> Deploy Warhead (Graphic Sequence)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 flex flex-col justify-between">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <h5 class="font-bold text-slate-100 text-xs">2. Thermonuclear B83 Strategic</h5>
+                                        <span class="text-[10px] bg-rose-950 text-rose-400 px-1.5 py-0.5 rounded border border-rose-800 font-mono">1.2 MT</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400">Multi-megaton strategic two-stage hydrogen warhead for total MAD deterrence.</p>
+                                    <div class="text-lg font-black text-rose-400">${gameState.nuclear.stockpile.thermonuclear} <span class="text-xs text-slate-400 font-normal">in stock</span></div>
+                                </div>
+                                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                                    <button onclick="dismantleWarhead('thermonuclear')" class="w-full py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded font-bold text-[11px] transition cursor-pointer">
+                                        <i class="fa-solid fa-wrench mr-1"></i> Dismantle (+Approval / Restores FTAs)
+                                    </button>
+                                    <button onclick="deployNuclearWarhead('thermonuclear')" class="w-full py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-400 border border-rose-800 rounded font-bold text-[11px] transition cursor-pointer">
+                                        <i class="fa-solid fa-radiation mr-1"></i> Deploy Warhead (Graphic Sequence)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 flex flex-col justify-between">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <h5 class="font-bold text-slate-100 text-xs">3. Doomsday Salted Cobalt-60</h5>
+                                        <span class="text-[10px] bg-purple-950 text-purple-400 px-1.5 py-0.5 rounded border border-purple-800 font-mono">Max Fallout</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400">Heavy radiological dirty device engineered to produce long-lasting lethal gamma fallout.</p>
+                                    <div class="text-lg font-black text-purple-400">${gameState.nuclear.stockpile.cobalt} <span class="text-xs text-slate-400 font-normal">in stock</span></div>
+                                </div>
+                                <div class="space-y-1.5 pt-2 border-t border-slate-800">
+                                    <button onclick="dismantleWarhead('cobalt')" class="w-full py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 rounded font-bold text-[11px] transition cursor-pointer">
+                                        <i class="fa-solid fa-wrench mr-1"></i> Dismantle (+Approval / Restores FTAs)
+                                    </button>
+                                    <button onclick="deployNuclearWarhead('cobalt')" class="w-full py-1.5 bg-rose-950 hover:bg-rose-900 text-rose-400 border border-rose-800 rounded font-bold text-[11px] transition cursor-pointer">
+                                        <i class="fa-solid fa-radiation mr-1"></i> Deploy Warhead (Graphic Sequence)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function getTotalDefenseCost() {
+            const missileOutlay = (gameState.defense.interceptorProd * 0.001) + (gameState.defense.hypersonicProd * 0.004);
+            const nuclearOutlay = (gameState.nuclear.state === 'construction_active') ? gameState.nuclear.quarterlyProgramCost : 0;
+            return gameState.defense.reserves + gameState.defense.cyber + gameState.defense.air + gameState.defense.naval + gameState.defense.norad + (gameState.defense.troops * 0.08) + missileOutlay + nuclearOutlay;
+        }
+
+        function updateTotalOutlays() {
+            let total = 0;
+            for (const key in gameState.funding) {
+                total += gameState.funding[key];
+            }
+            for (const key in gameState.associations) {
+                if (gameState.associations[key].funded) {
+                    total += gameState.associations[key].cost;
+                }
+            }
+            total += getTotalDefenseCost();
+            
+            const totalDisplay = document.getElementById('total-funding-display');
+            if (totalDisplay) {
+                totalDisplay.innerText = '$' + total.toFixed(1) + 'B / qtr';
+            }
+        }
+
+        function toggleAssociation(key) {
+            const assoc = gameState.associations[key];
+            if (assoc) {
+                assoc.funded = !assoc.funded;
+                
+                if (assoc.funded) {
+                    gameState.publicApproval = Math.min(100, gameState.publicApproval + assoc.approvalImpact);
+                    gameState.gdpGrowthRate = parseFloat((gameState.gdpGrowthRate + assoc.gdpImpact).toFixed(2));
+                    logNews('MULTILATERAL DIPLOMACY', `Canada fully funded & aligned with ${assoc.name}. Sovereign standing and diplomatic approval increased (+${assoc.approvalImpact}% Approval).`, 'success');
+                } else {
+                    gameState.publicApproval = Math.max(0, gameState.publicApproval - (assoc.approvalImpact * 1.5));
+                    gameState.gdpGrowthRate = parseFloat((gameState.gdpGrowthRate - (assoc.gdpImpact * 1.2)).toFixed(2));
+                    gameState.bondRiskSpread = parseFloat((gameState.bondRiskSpread + assoc.bondRisk).toFixed(2));
+                    logNews('ASSOCIATION OPT-OUT', `Canada withdrew funding/membership from ${assoc.name}. Diplomatic isolation triggered public approval drop (-${Math.round(assoc.approvalImpact * 1.5)}%) and bond risk spread increase.`, 'alert');
+                }
+
+                renderAssociations();
+                updateTotalOutlays();
+                renderKPIs();
+            }
+        }
+
+        function requestToSignFta(key) {
+            const fta = gameState.ftas[key];
+            if (!fta || fta.active) return;
+
+            const btn = document.getElementById(`fta-btn-${key}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Negotiating...`;
+            }
+
+            setTimeout(() => {
+                const allyBias = fta.allyScore || 50;
+                const randomRoll = Math.floor(Math.random() * 100);
+                const nptPenalty = gameState.nptCompliant ? 0 : 20; 
+                const calculatedSuccessThreshold = (100 - allyBias) + 15 + nptPenalty; 
+
+                if (randomRoll > calculatedSuccessThreshold) {
+                    fta.active = true;
+                    logNews('FTA RATIFIED', `Sovereign trade request to sign ${fta.name} APPROVED! Diplomatic protocols executed successfully. Trade boosted by +$${fta.tradeValue}B.`, 'success');
+                    gameState.tradeBalance += fta.tradeValue;
+                    gameState.publicApproval = Math.min(100, gameState.publicApproval + 3);
+                    gameState.gdpGrowthRate = parseFloat((gameState.gdpGrowthRate + 0.3).toFixed(2));
+                } else {
+                    logNews('FTA DIPLOMATIC STALEMATE', `Diplomatic request to sign ${fta.name} REJECTED or suspended by counterparty negotiators. Strategic variance roll failed.`, 'alert');
+                    gameState.publicApproval = Math.max(0, gameState.publicApproval - 1);
+                }
+
+                renderFtas();
+                renderKPIs();
+            }, 1200);
+        }
+
+        function toggleFta(key) {
+            const fta = gameState.ftas[key];
+            if (fta) {
+                if (fta.active) {
+                    fta.active = false;
+                    const downturnLoss = fta.tradeValue || 4.0;
+                    gameState.tradeBalance -= (downturnLoss * 1.5);
+                    gameState.gdpGrowthRate = parseFloat((gameState.gdpGrowthRate - 0.8).toFixed(2)); 
+                    gameState.unemploymentRate = parseFloat((gameState.unemploymentRate + 0.5).toFixed(2)); 
+                    gameState.cpiInflation = parseFloat((gameState.cpiInflation + 0.4).toFixed(2)); 
+                    gameState.publicApproval = Math.max(0, gameState.publicApproval - 6);
+
+                    logNews('ECONOMIC DOWNTURN WARNING', `Canada OPTED OUT of ${fta.name}! Severe trade shock & economic pain triggered. Trade balance crashed by -$${(downturnLoss * 1.5).toFixed(1)}B, GDP growth contracted, and CPI inflation surged due to new foreign tariffs.`, 'alert');
+                    renderFtas();
+                    renderKPIs();
+                } else {
+                    requestToSignFta(key);
+                }
+            }
+        }
+
+        function updateIndustryParam(key, param, val) {
+            const ind = gameState.industries[key];
+            if (!ind) return;
+
+            const oldVal = ind[param];
+            ind[param] = parseFloat(val) || 0;
+            const diff = ind[param] - oldVal;
+
+            if (param === 'duty') {
+                gameState.cpiInflation = parseFloat((gameState.cpiInflation + (diff * 0.05)).toFixed(2));
+            } else if (param === 'subsidy') {
+                ind.output = Math.max(20, parseFloat((ind.output + (diff * 2.5)).toFixed(1)));
+                gameState.gdpGrowthRate = parseFloat((gameState.gdpGrowthRate + (diff * 0.02)).toFixed(2));
+            } else if (param === 'exportTax') {
+                ind.output = Math.max(20, parseFloat((ind.output - (diff * 1.8)).toFixed(1)));
+                gameState.tradeBalance -= (diff * 0.2);
+            } else if (param === 'pricePerTon') {
+                const pctChange = (diff / oldVal) * 100;
+                ind.output = Math.max(20, parseFloat((ind.output * (1 + (pctChange / 200))).toFixed(1)));
+                gameState.cpiInflation = Math.max(0.1, parseFloat((gameState.cpiInflation + (pctChange * 0.015)).toFixed(2)));
+            }
+
+            renderKPIs();
+        }
+
+        function runAiNegotiation() {
+            const partner = document.getElementById('ai-nego-partner').value;
+            const strategy = document.getElementById('ai-nego-strategy').value;
+            const resultBox = document.getElementById('ai-nego-result');
+            
+            resultBox.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-purple-400 mr-2"></i> AI neural network calculating trade counter-tactics with ${partner.toUpperCase()}...`;
+            
+            setTimeout(() => {
+                let outcomeText = "";
+                const randomVariance = Math.random();
+
+                if (strategy === 'aggressive') {
+                    if (randomVariance > 0.4) {
+                        gameState.tradeBalance += 2.4;
+                        outcomeText = `🚀 Aggressive stance paid off! High-level breakthrough with ${partner.toUpperCase()}. Trade surplus surged by +$2.4B.`;
+                        logNews('AI TRADE NEGOTIATION', outcomeText, 'success');
+                    } else {
+                        gameState.tradeBalance -= 1.0;
+                        gameState.publicApproval = Math.max(0, gameState.publicApproval - 2);
+                        outcomeText = `⚠️ Aggressive tariff posturing backfired with ${partner.toUpperCase()}. Retaliatory duties imposed; surplus reduced by -$1.0B.`;
+                        logNews('AI TRADE NEGOTIATION', outcomeText, 'alert');
+                    }
+                } else if (strategy === 'resource_swap') {
+                    gameState.gdpGrowthRate = parseFloat((gameState.gdpGrowthRate + 0.2).toFixed(2));
+                    gameState.industries.aerospace.output += 12;
+                    outcomeText = `⚡ Critical mineral & tech exchange pact ratified with ${partner.toUpperCase()}. Industrial aerospace and tech output augmented.`;
+                    logNews('AI TRADE NEGOTIATION', outcomeText, 'success');
+                } else if (strategy === 'unpredictable') {
+                    if (randomVariance > 0.5) {
+                        gameState.tradeBalance += 3.5;
+                        gameState.publicApproval = Math.min(100, gameState.publicApproval + 3);
+                        outcomeText = `🎲 High-stakes gamble succeeded! Unpredictable diplomatic maneuvers outmaneuvered negotiators from ${partner.toUpperCase()}. +$3.5B trade boost!`;
+                        logNews('AI TRADE NEGOTIATION', outcomeText, 'success');
+                    } else {
+                        gameState.tradeBalance -= 2.0;
+                        outcomeText = `💥 High-stakes gamble stalled! Counterparty walked away from the table temporarily with ${partner.toUpperCase()}.`;
+                        logNews('AI TRADE NEGOTIATION', outcomeText, 'alert');
+                    }
+                } else {
+                    gameState.publicApproval = Math.min(100, gameState.publicApproval + 2);
+                    gameState.tradeBalance += 1.2;
+                    outcomeText = `🤝 Balanced bilateral compromise ratified smoothly with ${partner.toUpperCase()}. Trade surplus improved by +$1.2B.`;
+                    logNews('AI TRADE NEGOTIATION', outcomeText, 'success');
+                }
+                resultBox.innerText = outcomeText;
+                renderKPIs();
+            }, 1400);
+        }
+
+        function executeDefenseAudit() {
+            gameState.publicApproval = Math.min(100, gameState.publicApproval + 3);
+            logNews('DEFENCE AUDIT', `Joint Chiefs of Staff completed readiness review. Missile stockpile stands at ${gameState.defense.missileStockpile} units. Public confidence reinforced.`, 'success');
+            alert(`✅ DND Joint Staff Audit complete. Force readiness & missile defense stock verified.`);
+        }
+
+        function checkGameOver() {
+            if (gameState.publicApproval <= 0) {
+                consecutiveZeroApprovalQuarters++;
+            } else {
+                consecutiveZeroApprovalQuarters = 0;
+            }
+
+            if (consecutiveZeroApprovalQuarters >= 4) {
+                triggerGameOver("Voter approval remained at 0% for 4 consecutive quarters. Mass general strikes, legislative deadlock, and a constitutional crisis have forced the dissolution of parliament.");
+                return true;
+            }
+            return false;
+        }
+
+        function advanceQuarter() {
+            try {
+                gameState.quarter++;
+                if (gameState.quarter > 4) {
+                    gameState.quarter = 1;
+                    gameState.year++;
+                }
+
+                document.getElementById('current-quarter-display').innerText = `Year ${gameState.year} - Q${gameState.quarter}`;
+
+                gameState.defense.missileStockpile += (gameState.defense.interceptorProd + gameState.defense.hypersonicProd);
+                document.getElementById('dnd-missile-stockpile').innerText = gameState.defense.missileStockpile.toLocaleString() + ' Units';
+
+                if (gameState.nuclear.state === 'feasibility_active') {
+                    gameState.nuclear.feasibilityQuarterCount++;
+                    if (gameState.nuclear.feasibilityQuarterCount >= 6) {
+                        gameState.nuclear.state = 'feasibility_complete';
+                        logNews('NUCLEAR CONSOLE', 'Sovereign Nuclear Feasibility Analysis completed after 6 quarters! Cabinet Decision Sheet generated.', 'alert');
+                    }
+                } else if (gameState.nuclear.state === 'construction_active') {
+                    gameState.nuclear.constructionQuarterCount++;
+                    gameState.industries.aerospace.output += 8;
+                    gameState.industries.chemicals.output += 5;
+
+                    if (gameState.nuclear.constructionQuarterCount >= 12) {
+                        gameState.nuclear.state = 'stockpile_unlocked';
+                        gameState.nuclear.stockpile.tactical = 3;
+                        gameState.nuclear.stockpile.thermonuclear = 2;
+                        gameState.nuclear.stockpile.cobalt = 1;
+                        logNews('NUCLEAR MILESTONE', 'WEAPONS OF MASS DESTRUCTION READY! Initial sovereign warhead stockpile unlocked in Inventory & Stockpile UI.', 'alert');
+                    }
+                }
+
+                updateNuclearBannerUI();
+
+                let unfundedAssociationPenalties = 0;
+                for (const k in gameState.associations) {
+                    if (!gameState.associations[k].funded) {
+                        unfundedAssociationPenalties += (gameState.associations[k].bondRisk || 0.05);
+                    }
+                }
+
+                if (gameState.debtToGdp > 80.0) {
+                    const excess = gameState.debtToGdp - 80.0;
+                    gameState.bondRiskSpread = parseFloat((excess * 0.07 + unfundedAssociationPenalties).toFixed(2));
+                } else if (gameState.debtToGdp < 35.0) {
+                    gameState.bondRiskSpread = parseFloat((-0.20 + unfundedAssociationPenalties).toFixed(2)); 
+                } else {
+                    gameState.bondRiskSpread = parseFloat(unfundedAssociationPenalties.toFixed(2));
+                }
+                const effectiveBorrowingRate = Math.max(0.1, gameState.bocRate + gameState.bondRiskSpread);
+
+                const pitRev = (gameState.gdp * 0.38) * (gameState.pit / 100);
+                const citRev = (gameState.gdp * 0.22) * (gameState.cit / 100);
+                const gstRev = (gameState.gdp * 0.35) * (gameState.gst / 100);
+                const carbonRev = (gameState.carbonPrice * 0.20); 
+                const propTaxRev = (gameState.gdp * 0.15) * (gameState.propTaxRate / 100);
+                const wealthTaxRev = (gameState.gdp * 0.05) * (gameState.wealthTaxRate / 100);
+                const bankLevyRev = (gameState.gdp * 0.18) * (gameState.bankLevyRate / 100);
+                const tariffRev = (gameState.gdp * 0.10) * (gameState.tariffBaseRate / 100);
+
+                let industryTaxRev = 0;
+                let totalSubsidyOutlays = 0;
+                let totalIndustryOutput = 0;
+
+                for (const key in gameState.industries) {
+                    const ind = gameState.industries[key];
+                    totalIndustryOutput += ind.output;
+                    totalSubsidyOutlays += ind.subsidy;
+                    if (!ind.exoneration) {
+                        industryTaxRev += (ind.output * (ind.duty / 100)) + (ind.output * (ind.exportTax / 100));
+                    }
+                }
+
+                const totalTaxRev = pitRev + citRev + gstRev + carbonRev + propTaxRev + wealthTaxRev + bankLevyRev + tariffRev + industryTaxRev;
+
+                let totalSocialFunding = 0;
+                for (const key in gameState.funding) {
+                    totalSocialFunding += gameState.funding[key];
+                }
+                for (const key in gameState.associations) {
+                    if (gameState.associations[key].funded) {
+                        totalSocialFunding += gameState.associations[key].cost;
+                    }
+                }
+                totalSocialFunding += getTotalDefenseCost();
+
+                let debtServiceCost = gameState.nationalDebt * (effectiveBorrowingRate / 100) * 0.25;
+                const totalGovOutlays = totalSocialFunding + totalSubsidyOutlays + Math.max(0, debtServiceCost);
+                
+                gameState.budgetDeficit = totalGovOutlays - totalTaxRev;
+                gameState.nationalDebt += (gameState.budgetDeficit / 4);
+                gameState.debtToGdp = (gameState.nationalDebt / gameState.gdp) * 100;
+
+                gameState.monetaryLagQueue.push(effectiveBorrowingRate);
+                const laggedRate = gameState.monetaryLagQueue.shift(); 
+                const monetaryDrag = (laggedRate - 2.5) * 0.25;
+
+                let activeFtaCount = 0;
+                for (const f in gameState.ftas) {
+                    if (gameState.ftas[f].active) activeFtaCount++;
+                }
+                const ftaTradeBonus = (activeFtaCount - 4) * 0.1;
+
+                const infraBoost = (gameState.infraMultiplier - 1.0) * 0.18;
+                const unionWagePush = (gameState.unionPowerIndex - 50) * 0.005;
+                const surplusDrag = (gameState.budgetDeficit < 0) ? (Math.abs(gameState.budgetDeficit) * 0.003) : 0;
+
+                let newGdpGrowth = 2.1 - monetaryDrag + infraBoost + ftaTradeBonus - surplusDrag + (totalIndustryOutput / 4300);
+                newGdpGrowth = parseFloat((newGdpGrowth + (Math.random() - 0.5) * 0.2).toFixed(2));
+
+                gameState.gdpGrowthRate = newGdpGrowth;
+                gameState.gdp = gameState.gdp * (1 + (newGdpGrowth / 400));
+
+                const demandPullInflation = (newGdpGrowth - 2.0) * 0.22 + unionWagePush;
+                const rawInstantInflation = 2.0 + demandPullInflation;
+                let newInflation = (0.7 * gameState.cpiInflation) + (0.3 * rawInstantInflation);
+                gameState.cpiInflation = Math.max(0.1, parseFloat(newInflation.toFixed(2)));
+
+                let newUnemployment = gameState.unemploymentRate + ((2.0 - newGdpGrowth) * 0.2);
+                gameState.unemploymentRate = Math.min(15.0, Math.max(3.2, parseFloat(newUnemployment.toFixed(2))));
+
+                gameState.history.labels.push(`Y${gameState.year} Q${gameState.quarter}`);
+                gameState.history.gdpGrowth.push(gameState.gdpGrowthRate);
+                gameState.history.inflation.push(gameState.cpiInflation);
+                gameState.history.bocRate.push(effectiveBorrowingRate);
+                gameState.history.debtGdp.push(parseFloat(gameState.debtToGdp.toFixed(1)));
+
+                if (gameState.history.labels.length > 20) {
+                    gameState.history.labels.shift();
+                    gameState.history.gdpGrowth.shift();
+                    gameState.history.inflation.shift();
+                    gameState.history.bocRate.shift();
+                    gameState.history.debtGdp.shift();
+                }
+
+                if (macroChartObj) macroChartObj.update();
+                if (financeChartObj) financeChartObj.update();
+
+                renderKPIs();
+                triggerRandomGlobalNews();
+
+                // Check Game Over via zero approval
+                if (checkGameOver()) return;
+
+                // Auto-save game state on every quarter advance
+                saveGameToStorage();
+
+                logNews('STATSCAN', `Quarterly report: GDP Growth ${gameState.gdpGrowthRate}%, CPI ${gameState.cpiInflation}%, Deficit $${gameState.budgetDeficit.toFixed(1)}B, Active FTAs: ${activeFtaCount}/11.`, 'info');
+            } catch (err) {
+                console.error("Error during advanceQuarter execution:", err);
+            }
+        }
+
+        function triggerRandomGlobalNews() {
+            const globalEvents = [
+                { cat: 'GLOBAL MARKETS', text: 'Wall Street and European bourses hit record highs following upbeat semiconductor earnings and stabilized energy supplies.', type: 'success' },
+                { cat: 'GEOPOLITICS', text: 'OPEC+ announces surprise crude output adjustments, causing volatility across international energy benchmarks.', type: 'alert' },
+                { cat: 'ARCTIC SECURITY', text: 'Arctic Council Joint Patrols detect foreign surveillance submersibles near Canadian territorial waters; icebreaker response deployed.', type: 'alert' },
+                { cat: 'TRADE LEDGER', text: 'Pacific Rim container shipping volume increases by 4.2% year-over-year, easing global supply chain bottlenecks.', type: 'success' },
+                { cat: 'CYBER DEFENCE', text: 'Global AI Cyber Security Coalition neutralizes coordinated distributed attack against North American energy infrastructure.', type: 'success' }
+            ];
+            const ev = globalEvents[Math.floor(Math.random() * globalEvents.length)];
+            logNews(ev.cat, ev.text, ev.type);
+        }
+
+        function logNews(category, text, type = 'info') {
+            const container = document.getElementById('news-feed-container');
+            if (!container) return;
+
+            let badgeStyle = 'bg-sky-950 text-sky-400 border-sky-800';
+            if (type === 'success') badgeStyle = 'bg-emerald-950 text-emerald-400 border-emerald-800';
+            if (type === 'alert') badgeStyle = 'bg-rose-950 text-rose-400 border-rose-800';
+
+            const timeStamp = `Y${gameState.year}-Q${gameState.quarter}`;
+            const item = document.createElement('div');
+            item.className = 'bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs space-y-1';
+            item.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-[10px] uppercase px-1.5 py-0.5 rounded border ${badgeStyle}">${category}</span>
+                    <span class="text-[10px] text-slate-500">${timeStamp}</span>
+                </div>
+                <p class="text-slate-300 leading-relaxed">${text}</p>
+            `;
+            container.prepend(item);
+        }
+
+        function clearNewsLog() {
+            const container = document.getElementById('news-feed-container');
+            if (container) container.innerHTML = '';
+        }
+
+        function renderKPIs() {
+            try {
+                document.getElementById('kpi-gdp').innerText = '$' + gameState.gdp.toFixed(3) + ' T';
+                
+                const growthEl = document.getElementById('kpi-gdp-growth');
+                growthEl.innerText = (gameState.gdpGrowthRate >= 0 ? '+' : '') + gameState.gdpGrowthRate.toFixed(1) + '%';
+                growthEl.className = `text-[11px] font-semibold ${gameState.gdpGrowthRate >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+                document.getElementById('kpi-inflation').innerText = gameState.cpiInflation.toFixed(1) + '%';
+                document.getElementById('kpi-unemployment').innerText = gameState.unemploymentRate.toFixed(1) + '%';
+                document.getElementById('kpi-rate').innerText = gameState.bocRate.toFixed(2) + '%';
+                
+                const spreadEl = document.getElementById('kpi-bond-spread');
+                spreadEl.innerText = (gameState.bondRiskSpread >= 0 ? '+' : '') + Math.round(gameState.bondRiskSpread * 100) + ' bps';
+
+                document.getElementById('kpi-debt').innerText = gameState.debtToGdp.toFixed(1) + '%';
+                
+                const balanceEl = document.getElementById('kpi-budget-balance');
+                if (gameState.budgetDeficit > 0) {
+                    balanceEl.innerText = '-$' + gameState.budgetDeficit.toFixed(1) + 'B';
+                    balanceEl.className = 'text-[11px] font-semibold text-rose-400';
+                } else {
+                    balanceEl.innerText = '+$' + Math.abs(gameState.budgetDeficit).toFixed(1) + 'B';
+                    balanceEl.className = 'text-[11px] font-semibold text-emerald-400';
+                }
+
+                document.getElementById('kpi-fx').innerText = '$' + gameState.cadToUsd.toFixed(3);
+                
+                const tradeEl = document.getElementById('kpi-trade');
+                tradeEl.innerText = (gameState.tradeBalance >= 0 ? '+$' : '-$') + Math.abs(gameState.tradeBalance).toFixed(1) + 'B';
+                tradeEl.className = `text-lg sm:text-2xl font-bold ${gameState.tradeBalance >= 0 ? 'text-slate-100' : 'text-rose-400'}`;
+
+                document.getElementById('kpi-approval').innerText = Math.round(gameState.publicApproval) + '%';
+            } catch (e) {
+                console.error("KPI render error:", e);
+            }
+        }
+
+        function renderFundingSliders() {
+            const container = document.getElementById('funding-sliders-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const categories = [
+                { id: 'health', name: 'Universal Healthcare & Hospitals', val: gameState.funding.health, min: 30, max: 180 },
+                { id: 'education', name: 'Post-Secondary Education & Schools', val: gameState.funding.education, min: 20, max: 100 },
+                { id: 'research', name: 'Scientific Research & AI Grants', val: gameState.funding.research, min: 5, max: 60 },
+                { id: 'police', name: 'RCMP & Federal Law Enforcement', val: gameState.funding.police, min: 10, max: 70 },
+                { id: 'transport', name: 'High-Speed Rail & Transport Hubs', val: gameState.funding.transport, min: 10, max: 90 },
+                { id: 'environment', name: 'Clean Tech & Parks Protection', val: gameState.funding.environment, min: 2, max: 40 },
+                { id: 'housing', name: 'Affordable Housing Construction', val: gameState.funding.housing, min: 5, max: 80 },
+                { id: 'veterans', name: 'Veterans Affairs & Pensions', val: gameState.funding.veterans, min: 5, max: 40 },
+                { id: 'childcare', name: 'Early Childhood Education & Care', val: gameState.funding.childcare, min: 5, max: 50 }
+            ];
+
+            categories.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1.5 text-xs';
+                div.innerHTML = `
+                    <div class="flex justify-between font-semibold">
+                        <span class="text-slate-200">${item.name}</span>
+                        <span id="val-fund-${item.id}" class="text-purple-400 font-bold">$${item.val.toFixed(1)}B</span>
+                    </div>
+                    <input type="range" min="${item.min}" max="${item.max}" step="1" value="${item.val}" class="w-full h-1.5 bg-slate-800 rounded cursor-pointer" oninput="updateFunding('${item.id}', this.value)">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderIndustries() {
+            const container = document.getElementById('industry-cards-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (const key in gameState.industries) {
+                const ind = gameState.industries[key];
+                const card = document.createElement('div');
+                card.className = 'bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                        <span class="font-bold text-slate-100">${ind.name}</span>
+                        <span class="text-[10px] text-amber-400 font-mono font-bold">$${ind.output}B/yr</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <div>
+                            <label class="text-slate-400 block text-[10px]">Import Tariff (%)</label>
+                            <input type="number" min="0" max="30" value="${ind.duty}" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200" onchange="updateIndustryParam('${key}', 'duty', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-slate-400 block text-[10px]">Subsidy ($B)</label>
+                            <input type="number" min="0" max="50" value="${ind.subsidy}" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200" onchange="updateIndustryParam('${key}', 'subsidy', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-slate-400 block text-[10px]">Export Tax (%)</label>
+                            <input type="number" min="0" max="20" value="${ind.exportTax}" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200" onchange="updateIndustryParam('${key}', 'exportTax', this.value)">
+                        </div>
+                        <div>
+                            <label class="text-slate-400 block text-[10px]">Price Benchmark ($)</label>
+                            <input type="number" min="100" max="10000" value="${ind.pricePerTon}" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200" onchange="updateIndustryParam('${key}', 'pricePerTon', this.value)">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        function renderFtas() {
+            const container = document.getElementById('fta-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (const key in gameState.ftas) {
+                const fta = gameState.ftas[key];
+                const div = document.createElement('div');
+                div.className = 'bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1.5';
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-200">${fta.name}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-400">Ally Score: <strong class="text-sky-400">${fta.allyScore}%</strong></span>
+                            <button id="fta-btn-${key}" onclick="toggleFta('${key}')" class="px-2.5 py-1 rounded text-[11px] font-bold transition cursor-pointer ${fta.active ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900' : 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700'}">
+                                ${fta.active ? '<i class="fa-solid fa-check mr-1"></i> Active (Ratified)' : '<i class="fa-solid fa-file-signature mr-1"></i> Request to Sign'}
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 leading-normal">${fta.bonus} — Estimated Annual Value: <strong class="text-amber-400">+$${fta.tradeValue}B</strong></p>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function renderAssociations() {
+            const container = document.getElementById('associations-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (const key in gameState.associations) {
+                const assoc = gameState.associations[key];
+                const card = document.createElement('div');
+                card.className = 'bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs space-y-2 flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <span class="font-bold text-slate-100">${assoc.name}</span>
+                            <span class="text-teal-400 font-bold">$${assoc.cost}B / yr</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${assoc.desc}</p>
+                    </div>
+                    <div class="pt-2 border-t border-slate-800/80 flex justify-between items-center">
+                        <span class="text-[10px] ${assoc.funded ? 'text-emerald-400' : 'text-rose-400'} font-semibold">
+                            ${assoc.funded ? 'Status: Fully Funded & Aligned' : 'Status: Defunded / Opted Out'}
+                        </span>
+                        <button onclick="toggleAssociation('${key}')" class="px-3 py-1 rounded text-[11px] font-bold transition cursor-pointer ${assoc.funded ? 'bg-rose-950 text-rose-400 border border-rose-800 hover:bg-rose-900' : 'bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900'}">
+                            ${assoc.funded ? 'Opt Out / Defund' : 'Fund & Join'}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        // Window Initialization
+        window.onload = function () {
+            // Load saved game if exists
+            loadGameFromStorage();
+
+            // Loading Bar Simulation
+            const loadingBar = document.getElementById('loading-bar');
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 25;
+                if (loadingBar) loadingBar.style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        const loader = document.getElementById('loading-screen');
+                        if (loader) {
+                            loader.style.opacity = '0';
+                            setTimeout(() => loader.style.display = 'none', 500);
+                        }
+                    }, 200);
+                }
+            }, 100);
+
+            // Render Dynamic UI Layouts
+            refreshAllUI();
+
+            logNews('SYSTEM READY', 'EconoMaster Engine v5.5 initialized with sovereign trade, DND missile production, graphic nuclear deployment canvas overlay & emergency abort safety controls.', 'success');
+        };
+    </script>
+</body>
+</html>
